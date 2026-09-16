@@ -17,7 +17,7 @@
   };
 
   // Session + caches
-  var S = { me: null, csrf: null, settings: null, courses: null, sections: null, users: null, groups: null, courseCount: 43 };
+  var S = { me: null, csrf: null, impersonating: null, canImpersonate: false, settings: null, courses: null, sections: null, users: null, groups: null, courseCount: 43 };
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -143,7 +143,10 @@
     ];
     if (can('superadmin')) nav.push({ h: '#/settings', l: 'Settings', i: 'settings' });
     nav.push({ h: '#/account', l: 'My account', i: 'account' });
-    $('#app').innerHTML =
+    var banner = S.impersonating
+      ? '<div class="impersonation-bar"><span>You are viewing the admin panel as <strong>' + esc(me.name) + '</strong> (' + esc(ROLE_LABEL[me.role] || me.role) + '). Anything you do counts for their account.</span><button class="btn sm" id="stop-impersonating">Return to my account (' + esc(S.impersonating.by) + ')</button></div>'
+      : '';
+    $('#app').innerHTML = banner +
       '<div class="shell">' +
         '<aside class="side">' +
           '<a class="brand" href="#/dashboard"><img src="../assets/logo-icon-white.svg" alt=""><div><div class="t">Digital Certification</div><div class="s">Admin panel</div></div></a>' +
@@ -156,6 +159,22 @@
       '</div>';
     $('#signout').addEventListener('click', function () {
       api('auth.php?action=logout', {}).then(function () { location.replace('../login.html'); }, function () { location.replace('../login.html'); });
+    });
+    if ($('#stop-impersonating')) $('#stop-impersonating').addEventListener('click', function () {
+      var uid = S.me.id;
+      // Full reload (the query string changes so the browser never treats this as a hash-only change).
+      api('auth.php?action=stop_impersonating', {}).then(function () { location.replace('index.html?r=' + Date.now() + '#/users/' + uid); }).catch(function (e) { toast(e.message, 'err'); });
+    });
+  }
+
+  // "Sign in as": only a permitted super admin sees this. Confirms, switches the
+  // session to the other person, and opens the portal as them.
+  function impersonate(u) {
+    confirmDialog('Sign in as ' + u.name,
+      'You will see the portal exactly as <strong>' + esc(u.name) + '</strong> does, and anything you do (including passing quizzes) is recorded for their account. A bar at the bottom of the page lets you return to your own account.',
+      'Sign in as ' + (u.first_name || u.name)).then(function (yes) {
+      if (!yes) return;
+      api('auth.php?action=impersonate', { user_id: u.id }).then(function () { location.href = '../index.html'; }).catch(function (e) { toast(e.message, 'err'); });
     });
   }
 
@@ -546,7 +565,9 @@
       var isSelf = u.id === S.me.id;
       var html = '<div class="crumbs"><a href="#/users">People</a> › ' + esc(u.name) + '</div>' +
         '<div class="page-head"><div class="row" style="gap:16px"><span class="avatar lg">' + esc(initials(u.name)) + '</span><div><h1>' + esc(u.name) + '</h1><div class="row wrap" style="margin-top:6px">' + roleBadge(u.role) + accessBadge(u) + '<span class="muted small">' + esc(u.email) + (u.group_name ? ' · ' + esc(u.group_name) : '') + '</span></div></div></div>' +
-        '<div class="row wrap">' + (manageable ? '<button class="btn" id="p-edit">Edit details</button>' : '') + '</div></div>' +
+        '<div class="row wrap">' +
+          (S.canImpersonate && !isSelf && u.active ? '<button class="btn dark" id="p-impersonate" title="See the portal as this person">Sign in as ' + esc(u.first_name || u.name) + '</button>' : '') +
+          (manageable ? '<button class="btn" id="p-edit">Edit details</button>' : '') + '</div></div>' +
         '<div class="grid-2-3">' +
           '<div class="stack">' +
             '<div class="card"><div class="card-head"><h2>Details</h2></div><dl class="kv">' +
@@ -575,6 +596,7 @@
         '</div>';
       var main = setMain(html);
       if ($('#p-edit', main)) $('#p-edit', main).addEventListener('click', function () { openUserForm(u); });
+      if ($('#p-impersonate', main)) $('#p-impersonate', main).addEventListener('click', function () { impersonate(u); });
       bindAccessCard(main, u, isSelf);
 
       // Completion matrix
@@ -972,8 +994,8 @@
   // Boot
   // ---------------------------------------------------------------------------
   api('auth.php?action=me').then(function (d) {
-    S.me = d.user; S.csrf = d.csrf;
-    if (S.me.must_change_password) { location.replace('../login.html?mode=change&next=' + encodeURIComponent('admin/')); return; }
+    S.me = d.user; S.csrf = d.csrf; S.impersonating = d.impersonating || null; S.canImpersonate = !!d.can_impersonate;
+    if (S.me.must_change_password && !S.impersonating) { location.replace('../login.html?mode=change&next=' + encodeURIComponent('admin/')); return; }
     if (!can('trainer')) { location.replace('../index.html'); return; }
     renderShell();
     window.addEventListener('hashchange', function () { window.onbeforeunload = null; route(); });

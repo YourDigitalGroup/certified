@@ -57,6 +57,16 @@ Trainers, admins and super admins are not gated — they can open any course.
 
 Anyone who knows an email address can claim an account that has no password yet. That is inherent in the "email only" option you chose; once a password is set it is the only way in. If you want more protection later, the API already stores enough to add an invite code.
 
+## Sign in as another person (impersonation)
+
+On a person's page, the super admin sees a **Sign in as …** button. It switches your session to that person: you see the portal exactly as they do (their progress, their locks), and anything you do is recorded for their account. A bar at the bottom of the portal (and top of the admin panel) shows who you are viewing as, with a **Return to my account** button. Every action taken while impersonating is written to the activity log with your real account attached.
+
+By default only `scott@44interactive.com` can do this, even if other super admins are added. To change that, edit `IMPERSONATE_ALLOWED_EMAILS` in `api/config.php` (an empty list allows every super admin).
+
+## The `/admin` folder on the server
+
+The hosting account previously served a CMS from `/admin`. `admin/.htaccess` makes this panel win: it serves `index.html` for the folder, ignores any inherited rewrite rules, and refuses to execute PHP or other scripts inside the folder. If `/admin` still shows the CMS after deploying, the host is routing that path before it reaches this folder (an alias or proxy rule); ask the host to remove it, or tell me and I'll move the panel to a different path.
+
 ## Courses
 
 - **Attendance** (trainer+): filter by group, select individuals or everyone shown, add an optional note, then *Mark as passed* or *Remove pass*. Records show date, method (quiz / marked by trainer / imported) and who marked them.

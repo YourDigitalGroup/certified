@@ -41,5 +41,9 @@ define('SEED_SUPERADMIN_FIRST', 'Scott');
 define('SEED_SUPERADMIN_LAST', '');
 define('SEED_SUPERADMIN_GROUP', '44 Interactive');
 
+// "Sign in as" (impersonation) is a super-admin feature. Leave this list non-empty to
+// restrict it to specific super admin accounts; an empty array allows every super admin.
+define('IMPERSONATE_ALLOWED_EMAILS', ['scott@44interactive.com']);
+
 // Set true temporarily to include exception messages in API error responses.
 define('DEBUG', false);

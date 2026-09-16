@@ -33,6 +33,11 @@ code { font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
 .mt { margin-top: 16px; }
 .mb { margin-bottom: 16px; }
 
+/* ---- Impersonation banner ------------------------------------------------ */
+.impersonation-bar { position: sticky; top: 0; z-index: 400; background: var(--warning, #E89923); color: #1A1F26; padding: 9px 16px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; font-size: 13px; font-weight: 600; text-align: center; }
+.impersonation-bar .btn { background: #1A1F26; color: #fff; border-color: transparent; }
+.impersonation-bar .btn:hover { background: #303840; }
+
 /* ---- Shell -------------------------------------------------------------- */
 .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
 .side {

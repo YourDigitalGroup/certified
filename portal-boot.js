@@ -100,6 +100,29 @@
     document.head.appendChild(s);
   }
 
+  // Shown when a super admin is viewing the portal as someone else.
+  function impersonationBar(data) {
+    if (document.getElementById('portal-impersonation')) return;
+    var who = (data.user.name || data.user.email);
+    var bar = document.createElement('div');
+    bar.id = 'portal-impersonation';
+    bar.setAttribute('style', 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#2B4863;color:#fff;font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;box-shadow:0 -6px 20px rgba(11,15,20,0.2);flex-wrap:wrap;text-align:center');
+    var text = document.createElement('span');
+    text.textContent = 'You are viewing the portal as ' + who + '. Anything you do here counts for their account.';
+    var btn = document.createElement('button');
+    btn.textContent = 'Return to my account (' + (data.impersonating.by || 'super admin') + ')';
+    btn.setAttribute('style', 'font:inherit;font-weight:700;background:#fff;color:#2B4863;border:0;border-radius:9999px;padding:7px 14px;cursor:pointer');
+    btn.onclick = function () {
+      btn.disabled = true;
+      fetch('api/auth.php?action=stop_impersonating', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': data.csrf }, body: '{}' })
+        .then(function () { location.href = 'admin/#/users/' + encodeURIComponent(data.user.id); }, function () { location.reload(); });
+    };
+    bar.appendChild(text);
+    bar.appendChild(btn);
+    document.body.appendChild(bar);
+    document.body.style.paddingBottom = '56px';
+  }
+
   function showError(msg) {
     splash('<h2>Something went wrong</h2><p>' + msg + '</p><p style="margin-top:14px"><a href="' + location.pathname + '">Try again</a> &middot; <a href="login.html">Sign in</a></p>');
   }
@@ -115,7 +138,8 @@
     .then(function (data) {
       if (!data) return;
       if (!data.user) throw new Error('Unexpected response from the sign-in service.');
-      if (data.user.must_change_password) { go('login.html?mode=change&' + nextParam); return; }
+      if (data.user.must_change_password && !data.impersonating) { go('login.html?mode=change&' + nextParam); return; }
+      if (data.impersonating) onReady(function () { impersonationBar(data); });
       if (Array.isArray(data.progress)) data.progress = {};
       data.overrides = data.overrides || {};
       if (Array.isArray(data.overrides.videos)) data.overrides.videos = {};

@@ -290,7 +290,7 @@ function session_boot(): void
     $t = time();
     if (isset($_SESSION['uid']) && isset($_SESSION['last']) && ($t - (int)$_SESSION['last']) > SESSION_LIFETIME) {
         // Idle too long: drop the login but keep the session container.
-        unset($_SESSION['uid'], $_SESSION['csrf']);
+        unset($_SESSION['uid'], $_SESSION['csrf'], $_SESSION['impersonator_uid']);
     }
     $_SESSION['last'] = $t;
 }
@@ -350,6 +350,39 @@ function require_login(): array
     return $u;
 }
 
+// ---------------------------------------------------------------------------
+// Impersonation ("sign in as"): a permitted super admin temporarily becomes another
+// person. The real account is remembered in the session so they can switch back,
+// and every audit entry written meanwhile records who was really acting.
+// ---------------------------------------------------------------------------
+function impersonator(): ?array
+{
+    session_boot();
+    $iid = isset($_SESSION['impersonator_uid']) ? (int)$_SESSION['impersonator_uid'] : 0;
+    if ($iid <= 0) return null;
+    $u = fetch_user($iid);
+    return ($u && (int)$u['active'] === 1) ? $u : null;
+}
+
+function can_impersonate(array $actor): bool
+{
+    if (($actor['role'] ?? '') !== 'superadmin') return false;
+    $allow = IMPERSONATE_ALLOWED_EMAILS;
+    if (!is_array($allow) || count($allow) === 0) return true;
+    return in_array(normalize_email((string)$actor['email']), array_map('normalize_email', $allow), true);
+}
+
+/** Session facts the portal and admin UIs need next to the user object. */
+function session_extras(): array
+{
+    $u = current_user();
+    $imp = impersonator();
+    return [
+        'impersonating' => $imp ? ['by' => display_name($imp), 'by_id' => (int)$imp['id'], 'by_email' => $imp['email']] : null,
+        'can_impersonate' => (bool)($u && !$imp && can_impersonate($u)),
+    ];
+}
+
 const ROLES = ['student', 'trainer', 'admin', 'superadmin'];
 
 function role_rank(string $role): int
@@ -396,6 +429,13 @@ function require_csrf(): void
 function audit(?int $userId, string $action, string $target = '', $detail = null): void
 {
     if ($detail !== null && !is_string($detail)) $detail = json_encode($detail, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['impersonator_uid'])) {
+        $imp = fetch_user((int)$_SESSION['impersonator_uid']);
+        $detail = json_encode([
+            'impersonated_by' => $imp ? $imp['email'] : (int)$_SESSION['impersonator_uid'],
+            'detail' => $detail,
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
     db()->prepare('INSERT INTO audit_log (at, user_id, action, target, detail) VALUES (?, ?, ?, ?, ?)')
         ->execute([now(), $userId, $action, $target, $detail]);
 }

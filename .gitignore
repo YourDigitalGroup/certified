@@ -1,1 +1,11 @@
 .thumbnail
+
+# Runtime data created by the PHP API on the server — never commit.
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
+data/tmp/
+
+# Admin-uploaded replacement videos (created on the server at runtime).
+uploads/custom/

@@ -20,8 +20,11 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           local-dir: ./
-          # Only exclude files that should never be on the server
-          # admin/ data/ assets/ and all site files ARE included
+          # Only exclude files that should never be on the server.
+          # admin/ api/ data/ (manifest + .htaccess) assets/ and all site files ARE included.
+          # uploads/ (1.4 GB of training video) is synced separately, not by this action.
+          # The live database (data/portal.sqlite) and admin-uploaded videos
+          # (uploads/custom/) are created on the server and never touched here.
           exclude: |
             **/.git/**
             **/.github/**
@@ -29,5 +32,11 @@ jobs:
             **/scraps/**
             **/screenshots/**
             **/uploads/**
+            **/tools/**
+            **/vo-scripts/**
+            **/data/*.sqlite*
+            **/data/tmp/**
             README.md
+            ADMIN.md
+            CLAUDE.md
             .gitignore

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Digital Certification</title>
+<link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="_ds/44i-digital-design-system-019ddfd7-d959-76f6-b3f7-3ace50b2dadd/colors_and_type.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--font-sans, Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif);
+    color: var(--brand-ink, #2B4863);
+    background: var(--gray-50, #F7F9FC);
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+  header { background: rgba(255,255,255,0.92); border-bottom: 1px solid var(--gray-200, #E2E8F0); }
+  header .bar { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 16px; }
+  header img { height: 26px; display: block; }
+  header .div { width: 1px; height: 24px; background: var(--gray-200, #E2E8F0); }
+  header .title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+  main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 56px 16px 80px; }
+  .card { width: 100%; max-width: 440px; background: #fff; border: 1px solid var(--gray-200, #E2E8F0); border-radius: 20px; padding: 36px 36px 32px; box-shadow: 0 10px 30px rgba(43,72,99,0.06); }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand-blue-deep, #2F6FA8); margin-bottom: 12px; }
+  h1 { font-size: 28px; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 10px; font-weight: 700; }
+  p.lede { font-size: 15px; line-height: 1.55; color: var(--gray-600, #4A525C); margin: 0 0 24px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
+  .hint { font-size: 12px; color: var(--gray-500, #6B7480); margin: 6px 0 0; line-height: 1.45; }
+  .field { margin-bottom: 18px; }
+  input[type=email], input[type=password], input[type=text] {
+    width: 100%; font: inherit; font-size: 15px; padding: 12px 14px; border: 1px solid var(--gray-300, #CBD3DE); border-radius: 12px; background: #fff; color: inherit; outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  input:focus { border-color: var(--brand-blue, #4B9BD7); box-shadow: 0 0 0 3px var(--brand-blue-glow, #A9CFEC); }
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 68px; }
+  .pw-wrap button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font: inherit; font-size: 12px; font-weight: 700; color: var(--brand-blue-deep, #2F6FA8); background: transparent; border: 0; cursor: pointer; padding: 6px 8px; border-radius: 8px; }
+  .btn { width: 100%; font: inherit; font-size: 15px; font-weight: 700; padding: 13px 18px; border-radius: 9999px; border: 1px solid transparent; cursor: pointer; background: var(--accent-green-deep, #6FB56A); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.08); transition: transform 120ms ease, filter 120ms ease; }
+  .btn:hover { filter: brightness(1.04); }
+  .btn:active { transform: translateY(1px); }
+  .btn[disabled] { opacity: 0.6; cursor: progress; }
+  .btn.secondary { background: #fff; color: var(--brand-ink, #2B4863); border-color: var(--gray-300, #CBD3DE); box-shadow: none; margin-top: 10px; }
+  .msg { display: none; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.45; margin: 0 0 18px; }
+  .msg.show { display: block; }
+  .msg.error { background: var(--danger-soft, #FCEAE7); color: #9f2f25; border: 1px solid var(--danger, #E1483B); }
+  .msg.info { background: var(--brand-blue-soft, #E8F1FA); color: var(--brand-navy, #2B4863); border: 1px solid var(--brand-blue-glow, #A9CFEC); }
+  .msg.success { background: var(--success-soft, #E7F8EE); color: #0f6a31; border: 1px solid var(--success, #16A34A); }
+  .foot { margin-top: 22px; font-size: 13px; color: var(--gray-500, #6B7480); text-align: center; line-height: 1.5; }
+  .foot a, .link { color: var(--brand-blue-deep, #2F6FA8); text-decoration: none; font-weight: 600; cursor: pointer; background: none; border: 0; font: inherit; padding: 0; }
+  .foot a:hover, .link:hover { text-decoration: underline; }
+  .who { display: flex; align-items: center; gap: 12px; background: var(--gray-50, #F7F9FC); border: 1px solid var(--gray-100, #EEF2F7); border-radius: 14px; padding: 12px 14px; margin-bottom: 20px; }
+  .who .avatar { width: 38px; height: 38px; border-radius: 9999px; background: var(--brand-navy, #2B4863); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex: none; }
+  .who .name { font-size: 14px; font-weight: 700; line-height: 1.2; }
+  .who .email { font-size: 12px; color: var(--gray-500, #6B7480); line-height: 1.2; margin-top: 3px; word-break: break-all; }
+  .strength { height: 5px; border-radius: 9999px; background: var(--gray-100, #EEF2F7); overflow: hidden; margin-top: 8px; }
+  .strength > div { height: 100%; width: 0; border-radius: 9999px; background: var(--warning, #E89923); transition: width 200ms ease, background 200ms ease; }
+  .hidden { display: none !important; }
+  @media (max-width: 480px) { .card { padding: 28px 22px 26px; border-radius: 16px; } h1 { font-size: 24px; } main { padding-top: 28px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <img src="assets/logo-full.svg" alt="44i Digital">
+    <div class="div"></div>
+    <div class="title">Digital Certification</div>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <div id="msg" class="msg" role="alert"></div>
+
+    <!-- Mode: sign in -->
+    <form id="f-login" autocomplete="on" novalidate>
+      <div class="eyebrow">Welcome</div>
+      <h1>Sign in to your training.</h1>
+      <p class="lede">Use the email your trainer or administrator added. If you have not set a password yet, leave that field blank and we will help you create one.</p>
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" inputmode="email" autocomplete="username" required autofocus placeholder="you@yourstation.com">
+      </div>
+      <div class="field">
+        <label for="login-password">Password <span style="font-weight:500;color:var(--gray-500)">(leave blank if you have not set one)</span></label>
+        <div class="pw-wrap">
+          <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="pw-toggle" aria-label="Show password">Show</button>
+        </div>
+      </div>
+      <button class="btn" type="submit" id="login-submit">Continue →</button>
+      <div class="foot">Trouble signing in? Ask your trainer or administrator to check your account.</div>
+    </form>
+
+    <!-- Mode: create password (first sign-in without one) -->
+    <form id="f-create" class="hidden" autocomplete="on" novalidate>
+      <div class="eyebrow">First sign-in</div>
+      <h1>Create your password.</h1>
+      <p class="lede">You will use this password from now on. At least 8 characters.</p>
+      <div class="who"><div class="avatar" id="create-avatar">?</div><div><div class="name" id="create-name"></div><div class="email" id="create-email"></div></div></div>
+      <input type="hidden" name="email" id="create-email-field" autocomplete="username">
+      <div class="field">
+        <label for="create-password">New password</label>
+        <div class="pw-wrap">
+          <input id="create-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required>
+          <button type="button" class="pw-toggle" aria-label="Show password">Show</button>
+        </div>
+        <div class="strength"><div id="create-strength"></div></div>
+      </div>
+      <div class="field">
+        <label for="create-confirm">Confirm password</label>
+        <input id="create-confirm" type="password" autocomplete="new-password" minlength="8" required>
+      </div>
+      <button class="btn" type="submit" id="create-submit">Set password and sign in →</button>
+      <button class="btn secondary" type="button" id="create-back">Back</button>
+    </form>
+
+    <!-- Mode: change password (forced on first login, or voluntary) -->
+    <form id="f-change" class="hidden" autocomplete="on" novalidate>
+      <div class="eyebrow" id="change-eyebrow">Security</div>
+      <h1 id="change-title">Choose a new password.</h1>
+      <p class="lede" id="change-lede">Your account is using a temporary password. Pick a new one to continue.</p>
+      <div class="who"><div class="avatar" id="change-avatar">?</div><div><div class="name" id="change-name"></div><div class="email" id="change-email"></div></div></div>
+      <div class="field">
+        <label for="change-current">Current password</label>
+        <div class="pw-wrap">
+          <input id="change-current" type="password" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" aria-label="Show password">Show</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="change-password">New password</label>
+        <div class="pw-wrap">
+          <input id="change-password" type="password" autocomplete="new-password" minlength="8" required>
+          <button type="button" class="pw-toggle" aria-label="Show password">Show</button>
+        </div>
+        <div class="strength"><div id="change-strength"></div></div>
+      </div>
+      <div class="field">
+        <label for="change-confirm">Confirm new password</label>
+        <input id="change-confirm" type="password" autocomplete="new-password" minlength="8" required>
+      </div>
+      <button class="btn" type="submit" id="change-submit">Save new password →</button>
+      <button class="btn secondary" type="button" id="change-cancel">Not now, sign out</button>
+    </form>
+  </div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var API = 'api/';
+  var qs = new URLSearchParams(location.search);
+  var mode = qs.get('mode') || 'login';
+  var session = null; // {user, csrf} once signed in
+
+  // Only allow same-site, relative destinations.
+  function safeNext() {
+    var n = qs.get('next') || '';
+    n = n.trim();
+    if (!n) return 'index.html';
+    if (/^[a-z][a-z0-9+.-]*:/i.test(n) || n.indexOf('//') === 0 || n.indexOf('\\') >= 0 || n.indexOf('..') >= 0) return 'index.html';
+    return n.replace(/^\/+/, '') || 'index.html';
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var forms = { login: $('f-login'), create: $('f-create'), change: $('f-change') };
+  var msg = $('msg');
+
+  function show(kind, text) {
+    msg.className = 'msg show ' + kind;
+    msg.textContent = text;
+  }
+  function clearMsg() { msg.className = 'msg'; msg.textContent = ''; }
+  function setMode(m) {
+    mode = m;
+    Object.keys(forms).forEach(function (k) { forms[k].classList.toggle('hidden', k !== m); });
+    var first = forms[m].querySelector('input:not([type=hidden]):not([disabled])');
+    if (first) setTimeout(function () { first.focus(); }, 30);
+  }
+  function busy(btn, on, label) {
+    btn.disabled = on;
+    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+    btn.textContent = on ? (label || 'Please wait…') : btn.dataset.label;
+  }
+  function initials(name) {
+    var p = String(name || '').trim().split(/\s+/).filter(Boolean);
+    return ((p[0] ? p[0][0] : '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() || '?';
+  }
+  function api(path, body, csrf) {
+    var opts = { credentials: 'same-origin', cache: 'no-store', headers: {} };
+    if (body !== undefined) {
+      opts.method = 'POST';
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    if (csrf) opts.headers['X-CSRF-Token'] = csrf;
+    return fetch(API + path, opts).then(function (r) {
+      return r.text().then(function (t) {
+        var d = {};
+        try { d = t ? JSON.parse(t) : {}; } catch (e) { d = { error: 'The server returned an unexpected response.' }; }
+        d.__status = r.status;
+        return d;
+      });
+    }).catch(function () { return { error: 'Could not reach the server. Check your connection and try again.', __status: 0 }; });
+  }
+  function strength(pw, bar) {
+    var s = 0;
+    if (pw.length >= 8) s++;
+    if (pw.length >= 12) s++;
+    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
+    if (/\d/.test(pw)) s++;
+    if (/[^A-Za-z0-9]/.test(pw)) s++;
+    var pct = Math.min(100, s * 20);
+    bar.style.width = (pw ? Math.max(8, pct) : 0) + '%';
+    bar.style.background = s <= 2 ? 'var(--warning, #E89923)' : (s <= 3 ? 'var(--brand-blue, #4B9BD7)' : 'var(--success, #16A34A)');
+  }
+  function finish() { location.replace(safeNext()); }
+
+  // Show/hide password toggles
+  Array.prototype.forEach.call(document.querySelectorAll('.pw-toggle'), function (b) {
+    b.addEventListener('click', function () {
+      var input = b.parentNode.querySelector('input');
+      var showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      b.textContent = showing ? 'Show' : 'Hide';
+    });
+  });
+  $('create-password').addEventListener('input', function (e) { strength(e.target.value, $('create-strength')); });
+  $('change-password').addEventListener('input', function (e) { strength(e.target.value, $('change-strength')); });
+
+  // ---- Sign in --------------------------------------------------------------
+  forms.login.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearMsg();
+    var email = $('login-email').value.trim();
+    var password = $('login-password').value;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { show('error', 'Enter a valid email address.'); $('login-email').focus(); return; }
+    var btn = $('login-submit');
+    busy(btn, true, 'Signing in…');
+    api('auth.php?action=login', { email: email, password: password }).then(function (d) {
+      busy(btn, false);
+      if (d.status === 'set_password') {
+        $('create-name').textContent = d.name || '';
+        $('create-email').textContent = d.email;
+        $('create-email-field').value = d.email;
+        $('create-avatar').textContent = initials(d.name || d.email);
+        setMode('create');
+        return;
+      }
+      if (d.status === 'password_required') {
+        show('info', 'This account has a password. Enter it to continue.');
+        $('login-password').focus();
+        return;
+      }
+      if (d.status === 'ok') {
+        session = d;
+        if (d.user && d.user.must_change_password) { prepChange(d.user, true); setMode('change'); return; }
+        finish();
+        return;
+      }
+      show('error', d.error || 'Sign-in failed. Please try again.');
+      if (d.code === 'no_account') $('login-email').focus();
+      else $('login-password').focus();
+    });
+  });
+
+  // ---- Create password (first sign-in) ---------------------------------------
+  forms.create.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearMsg();
+    var pw = $('create-password').value, cf = $('create-confirm').value;
+    if (pw.length < 8) { show('error', 'Your password needs at least 8 characters.'); $('create-password').focus(); return; }
+    if (pw !== cf) { show('error', 'The two passwords do not match.'); $('create-confirm').focus(); return; }
+    var btn = $('create-submit');
+    busy(btn, true, 'Saving…');
+    api('auth.php?action=set_initial_password', { email: $('create-email-field').value, password: pw }).then(function (d) {
+      busy(btn, false);
+      if (d.status === 'ok') { finish(); return; }
+      show('error', d.error || 'Could not set your password.');
+      if (d.code === 'has_password') setMode('login');
+    });
+  });
+  $('create-back').addEventListener('click', function () { clearMsg(); setMode('login'); });
+
+  // ---- Change password -------------------------------------------------------
+  function prepChange(user, forced) {
+    $('change-name').textContent = user.name || '';
+    $('change-email').textContent = user.email || '';
+    $('change-avatar').textContent = initials(user.name || user.email);
+    $('change-eyebrow').textContent = forced ? 'Action required' : 'Security';
+    $('change-title').textContent = forced ? 'Choose a new password.' : 'Change your password.';
+    $('change-lede').textContent = forced
+      ? 'Your account is using a temporary password. Pick a new one to continue.'
+      : 'Enter your current password, then choose a new one.';
+    $('change-cancel').textContent = forced ? 'Not now, sign out' : 'Cancel';
+    $('change-cancel').dataset.forced = forced ? '1' : '';
+  }
+  forms.change.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearMsg();
+    var cur = $('change-current').value, pw = $('change-password').value, cf = $('change-confirm').value;
+    if (!cur) { show('error', 'Enter your current password.'); $('change-current').focus(); return; }
+    if (pw.length < 8) { show('error', 'Your new password needs at least 8 characters.'); $('change-password').focus(); return; }
+    if (pw !== cf) { show('error', 'The two passwords do not match.'); $('change-confirm').focus(); return; }
+    if (pw === cur) { show('error', 'Choose a password different from your current one.'); $('change-password').focus(); return; }
+    var btn = $('change-submit');
+    busy(btn, true, 'Saving…');
+    api('auth.php?action=change_password', { current_password: cur, new_password: pw }, session && session.csrf).then(function (d) {
+      busy(btn, false);
+      if (d.status === 'ok') { show('success', 'Password updated. Taking you in…'); setTimeout(finish, 600); return; }
+      if (d.__status === 401) { show('error', 'Your session expired. Please sign in again.'); setMode('login'); return; }
+      show('error', d.error || 'Could not change your password.');
+      if (d.code === 'bad_current') $('change-current').focus();
+    });
+  });
+  $('change-cancel').addEventListener('click', function () {
+    if ($('change-cancel').dataset.forced) {
+      api('auth.php?action=logout', {}, session && session.csrf).then(function () { session = null; clearMsg(); $('login-password').value = ''; setMode('login'); });
+    } else {
+      finish();
+    }
+  });
+
+  // ---- Boot -----------------------------------------------------------------
+  if (mode === 'change') {
+    api('auth.php?action=me').then(function (d) {
+      if (d.user) {
+        session = d;
+        prepChange(d.user, !!d.user.must_change_password);
+        setMode('change');
+      } else {
+        setMode('login');
+      }
+    });
+  } else {
+    // Already signed in? Go straight through (unless a password change is pending).
+    api('auth.php?action=me').then(function (d) {
+      if (d.user) {
+        session = d;
+        if (d.user.must_change_password) { prepChange(d.user, true); setMode('change'); }
+        else finish();
+      } else {
+        setMode('login');
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# This folder is the training portal's admin panel (static HTML/JS; the API lives in ../api/).
+# The hosting account previously served a CMS from /admin. These rules make sure this
+# panel is what /admin shows, whatever else is left in the folder on the server:
+#  - serve index.html for the folder URL, ahead of any index.php
+#  - do not inherit rewrite rules from a parent .htaccess (a CMS front controller, for example)
+#  - never execute PHP or other scripts from inside this folder
+
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # No rules: turning the engine on here replaces any inherited per-directory rules.
+</IfModule>
+
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+
+<FilesMatch "\.(php|phtml|phar|php[0-9]|cgi|pl|py|shtml)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>

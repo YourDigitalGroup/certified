@@ -33,17 +33,48 @@ switch ($action) {
 
     case 'me':
         $u = require_login();
-        respond(['user' => user_public($u), 'csrf' => csrf_token()]);
+        respond(array_merge(['user' => user_public($u), 'csrf' => csrf_token()], session_extras()));
 
     case 'bootstrap':
         $u = require_login();
-        respond([
+        respond(array_merge([
             'user' => user_public($u),
             'csrf' => csrf_token(),
             'progress' => (object)progress_for((int)$u['id']),
             'overrides' => overrides(),
             'settings' => public_settings(),
-        ]);
+        ], session_extras()));
+
+    case 'impersonate':
+        // A permitted super admin views the portal (or admin) as another person.
+        require_post();
+        $u = require_login();
+        require_csrf();
+        if (impersonator()) fail('You are already viewing as someone else. Return to your account first.', 409, ['code' => 'already_impersonating']);
+        if (!can_impersonate($u)) fail('Only the super admin can sign in as another person.', 403, ['code' => 'forbidden']);
+        $t = fetch_user((int)in_int(input(), 'user_id', 0));
+        if (!$t) fail('User not found', 404);
+        if ((int)$t['id'] === (int)$u['id']) fail('That is your own account.');
+        if ((int)$t['active'] !== 1) fail('That account is deactivated.');
+        audit((int)$u['id'], 'auth.impersonate', $t['email'], ['target_id' => (int)$t['id']]);
+        $_SESSION['impersonator_uid'] = (int)$u['id'];
+        $_SESSION['uid'] = (int)$t['id'];
+        $_SESSION['csrf'] = random_token(24);
+        respond(['status' => 'ok', 'user' => user_public($t), 'csrf' => $_SESSION['csrf'],
+            'impersonating' => ['by' => display_name($u), 'by_id' => (int)$u['id'], 'by_email' => $u['email']], 'can_impersonate' => false]);
+
+    case 'stop_impersonating':
+        require_post();
+        require_login();
+        require_csrf();
+        $imp = impersonator();
+        if (!$imp) fail('You are not viewing as anyone else.', 409, ['code' => 'not_impersonating']);
+        $target = current_user();
+        audit((int)$imp['id'], 'auth.stop_impersonating', $target ? $target['email'] : '');
+        unset($_SESSION['impersonator_uid']);
+        $_SESSION['uid'] = (int)$imp['id'];
+        $_SESSION['csrf'] = random_token(24);
+        respond(['status' => 'ok', 'user' => user_public($imp), 'csrf' => $_SESSION['csrf'], 'impersonating' => null, 'can_impersonate' => can_impersonate($imp)]);
 
     case 'login':
         require_post();

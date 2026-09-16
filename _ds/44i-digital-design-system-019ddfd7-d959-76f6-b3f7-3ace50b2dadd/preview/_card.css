@@ -1,0 +1,14 @@
+@import url('../colors_and_type.css');
+
+html, body { margin: 0; background: #fff; color: var(--fg-1); font-family: var(--font-sans); }
+.card {
+  width: 700px;
+  box-sizing: border-box;
+  padding: 24px;
+  background: #fff;
+}
+.row { display: flex; align-items: center; gap: 16px; }
+.col { display: flex; flex-direction: column; gap: 12px; }
+.muted { color: var(--fg-3); font-size: 12px; letter-spacing: 0.04em; }
+.kbd { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+.swatch { border-radius: 12px; border: 1px solid var(--border); }

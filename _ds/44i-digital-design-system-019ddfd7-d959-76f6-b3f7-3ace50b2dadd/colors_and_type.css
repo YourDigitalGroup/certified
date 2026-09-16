@@ -1,0 +1,274 @@
+/* ============================================================
+   44i DIGITAL — Foundations
+   Tokens: color, type, spacing, radii, shadows, motion
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* -----------------------------
+     BRAND
+     Sampled from 44idigital.devlink9.info
+     ----------------------------- */
+  --brand-blue:        #4B9BD7;   /* primary — 44i sky blue (logo mark) */
+  --brand-blue-deep:   #2F6FA8;   /* press / active · text-safe on white */
+  --brand-blue-bright: #639AD1;   /* CTA button face / hover */
+  --brand-blue-soft:   #E8F1FA;   /* tint, surfaces */
+  --brand-blue-glow:   #A9CFEC;   /* highlights, focus rings */
+
+  /* Navy — the core dark brand color (nav pills, dark cards, headlines, ink). */
+  --brand-navy:        #2B4863;   /* primary dark surface / text ink */
+  --brand-navy-deep:   #1B3145;   /* deepest — footer, press on navy */
+  --brand-navy-soft:   #3C5D7C;   /* raised card on navy */
+  --brand-navy-tint:   #EBF0F5;   /* pale navy wash on light bg */
+
+  /* Green — supporting data / highlight accent (charts, marker underline). */
+  --accent-green:      #A6D5A0;   /* bars, highlighter swipe */
+  --accent-green-deep: #6FB56A;   /* text-safe green on white */
+  --accent-green-soft: #EAF5E8;   /* tint */
+
+  --brand-ink:         #2B4863;   /* text ink = navy (matches live site) */
+  --brand-black:       #0B0F14;   /* true near-black, rare */
+  --brand-paper:       #FFFFFF;
+
+  /* -----------------------------
+     NEUTRAL SCALE (cool gray)
+     ----------------------------- */
+  --gray-50:  #F7F9FC;
+  --gray-100: #EEF2F7;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD3DE;
+  --gray-400: #9AA4B2;
+  --gray-500: #6B7480;
+  --gray-600: #4A525C;
+  --gray-700: #303840;
+  --gray-800: #1A1F26;
+  --gray-900: #0B0F14;
+
+  /* -----------------------------
+     SEMANTIC — surfaces & text
+     ----------------------------- */
+  --bg:        #FFFFFF;
+  --bg-alt:    var(--gray-50);
+  --bg-sunken: var(--gray-100);
+  --surface:   #FFFFFF;
+  --surface-2: var(--gray-50);
+
+  --fg-1: var(--brand-ink);     /* primary text */
+  --fg-2: var(--gray-600);      /* secondary text */
+  --fg-3: var(--gray-500);      /* tertiary, captions */
+  --fg-4: var(--gray-400);      /* placeholder, disabled */
+  --fg-on-brand: #FFFFFF;
+  --fg-on-dark: #FFFFFF;
+
+  --border:        var(--gray-200);
+  --border-strong: var(--gray-300);
+  --divider:       var(--gray-100);
+
+  /* -----------------------------
+     SEMANTIC — feedback
+     ----------------------------- */
+  --success:       #16A34A;
+  --success-soft:  #E7F8EE;
+  --warning:       #E89923;
+  --warning-soft:  #FCF1DE;
+  --danger:        #E1483B;
+  --danger-soft:   #FCEAE7;
+  --info:          var(--brand-blue);
+  --info-soft:     var(--brand-blue-soft);
+
+  /* -----------------------------
+     DARK MODE PALETTE
+     ----------------------------- */
+  --dark-bg:        #07090C;
+  --dark-bg-alt:    #0E1218;
+  --dark-surface:   #131922;
+  --dark-surface-2: #1A2230;
+  --dark-border:    #1F2937;
+  --dark-fg-1:      #F4F7FB;
+  --dark-fg-2:      #B7C2D0;
+  --dark-fg-3:      #8995A4;
+
+  /* -----------------------------
+     TYPE — families
+     ----------------------------- */
+  --font-sans:    'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* -----------------------------
+     TYPE — scale (rem-equivalent px @ 16)
+     ----------------------------- */
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  14px;
+  --text-md:  16px;
+  --text-lg:  18px;
+  --text-xl:  20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 38px;
+  --text-5xl: 48px;
+  --text-6xl: 64px;
+  --text-7xl: 80px;
+  --text-8xl: 104px;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-black:    800;
+
+  --leading-tight:  1.05;
+  --leading-snug:   1.2;
+  --leading-normal: 1.45;
+  --leading-loose:  1.65;
+
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.02em;
+  --tracking-allcaps: 0.08em;
+
+  /* -----------------------------
+     SPACING — 4px base
+     ----------------------------- */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  32px;
+  --space-8:  40px;
+  --space-9:  48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 96px;
+  --space-13: 128px;
+
+  /* -----------------------------
+     RADII — generous, rounded
+     ----------------------------- */
+  --radius-xs:    4px;
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --radius-xl:    20px;
+  --radius-2xl:   28px;
+  --radius-3xl:   36px;
+  --radius-full:  9999px;
+
+  /* -----------------------------
+     SHADOWS — soft, multi-layer
+     ----------------------------- */
+  --shadow-xs: 0 1px 2px rgba(11,15,20,0.04);
+  --shadow-sm: 0 1px 2px rgba(11,15,20,0.04), 0 2px 6px rgba(11,15,20,0.06);
+  --shadow-md: 0 4px 10px rgba(11,15,20,0.06), 0 12px 28px rgba(11,15,20,0.08);
+  --shadow-lg: 0 12px 24px rgba(11,15,20,0.08), 0 28px 64px rgba(11,15,20,0.12);
+  --shadow-xl: 0 24px 48px rgba(11,15,20,0.12), 0 48px 120px rgba(11,15,20,0.18);
+  --shadow-brand: 0 8px 20px rgba(75,155,215,0.30), 0 2px 6px rgba(75,155,215,0.20);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(11,15,20,0.04);
+
+  /* Focus ring */
+  --ring: 0 0 0 3px rgba(75,155,215,0.32);
+  --ring-strong: 0 0 0 4px rgba(75,155,215,0.45);
+
+  /* -----------------------------
+     MOTION
+     ----------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);     /* @kind other */
+  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);       /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* @kind other */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);/* @kind other */
+
+  --dur-1: 120ms; /* @kind other */
+  --dur-2: 180ms; /* @kind other */
+  --dur-3: 240ms; /* @kind other */
+  --dur-4: 360ms; /* @kind other */
+  --dur-5: 600ms; /* @kind other */
+
+  /* -----------------------------
+     LAYOUT
+     ----------------------------- */
+  --container: 1200px;
+  --container-wide: 1360px;
+  --container-narrow: 880px;
+}
+
+/* ============================================================
+   SEMANTIC TYPE STYLES
+   ============================================================ */
+
+html { font-family: var(--font-sans); color: var(--fg-1); background: var(--bg); }
+body { margin: 0; font-size: var(--text-md); line-height: var(--leading-normal); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+.h-display, h1.display {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 7vw, var(--text-8xl));
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-bold);
+  color: var(--fg-1);
+}
+
+h1, .h1 {
+  font-size: clamp(36px, 4.5vw, var(--text-6xl));
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-bold);
+  color: var(--fg-1);
+  margin: 0 0 var(--space-5);
+}
+
+h2, .h2 {
+  font-size: clamp(28px, 3vw, var(--text-4xl));
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  font-weight: var(--weight-bold);
+  color: var(--fg-1);
+  margin: 0 0 var(--space-4);
+}
+
+h3, .h3 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-1);
+  margin: 0 0 var(--space-3);
+}
+
+h4, .h4 {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-1);
+  margin: 0 0 var(--space-2);
+}
+
+p, .body { font-size: var(--text-md); line-height: var(--leading-normal); color: var(--fg-1); }
+.lead { font-size: var(--text-xl); line-height: var(--leading-normal); color: var(--fg-2); }
+.small, small { font-size: var(--text-sm); color: var(--fg-2); }
+.caption { font-size: var(--text-xs); color: var(--fg-3); letter-spacing: var(--tracking-wide); }
+
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-allcaps);
+  text-transform: uppercase;
+  color: var(--brand-blue);
+}
+
+code, .code, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-sunken);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  color: var(--fg-1);
+}
+
+a { color: var(--brand-blue); text-decoration: none; }
+a:hover { color: var(--brand-blue-deep); text-decoration: underline; text-underline-offset: 3px; }

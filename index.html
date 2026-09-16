@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
+<title>Digital Certification · 44i Digital</title>
+<link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+<script src="./portal-boot.js"></script>
 </head>
 <body>
 <x-dc>
@@ -40,6 +42,8 @@
       [data-r="modrow"] { padding-left: 16px !important; padding-right: 16px !important; }
       [data-r="secimg"] { width: 52px !important; height: 52px !important; }
       [data-r="chip"] { display: none !important; }
+      [data-r="hdr-admin"] { display: none !important; }
+      [data-r="hdr-signout"] { padding: 7px 9px !important; }
     }
     a { color: var(--brand-blue); text-decoration: none; }
     a:hover { color: var(--brand-blue-deep); text-decoration: underline; text-underline-offset: 3px; }
@@ -59,11 +63,15 @@
         </div>
         <div data-r="hdr-div" style="width: 1px; height: 24px; background: var(--gray-200);"></div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="uploads/sally.jpg" alt="{{ userName }}" style="width: 34px; height: 34px; border-radius: 9999px; object-fit: cover; border: 2px solid var(--brand-blue-glow);">
+          <div title="{{ userName }}" style="width: 34px; height: 34px; border-radius: 9999px; background: var(--brand-navy); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; border: 2px solid var(--brand-blue-glow); flex: none;">{{ userInitials }}</div>
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="font-size: 13px; font-weight: 700; line-height: 1;">{{ userName }}</div>
             <div style="font-size: 11px; font-weight: 600; color: var(--gray-500); line-height: 1;">{{ userGroup }}</div>
           </div>
+          <sc-if value="{{ showAdminLink }}" hint-placeholder-val="{{ false }}">
+            <a href="admin/" data-r="hdr-admin" style="margin-left: 8px; font-size: 12px; font-weight: 700; color: var(--brand-blue-deep); background: var(--brand-blue-soft); border: 1px solid transparent; border-radius: 9999px; padding: 7px 13px; text-decoration: none; line-height: 1; white-space: nowrap;">Admin</a>
+          </sc-if>
+          <button onClick="{{ signOut }}" data-r="hdr-signout" title="Sign out" style="font-family: inherit; font-size: 12px; font-weight: 700; color: var(--gray-600); background: #fff; border: 1px solid var(--gray-200); border-radius: 9999px; padding: 7px 13px; cursor: pointer; line-height: 1; white-space: nowrap;">Sign out</button>
         </div>
       </div>
     </div>
@@ -6595,6 +6603,9 @@
               <div style="{{ resultSty }}">
                 <div style="font-size:22px;font-weight:800;margin-bottom:6px;">{{ resultTitle }}</div>
                 <div style="font-size:15px;line-height:1.5;margin-bottom:20px;">{{ resultBody }}</div>
+                <sc-if value="{{ hasSaveWarning }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:13px;line-height:1.5;margin:-8px 0 18px;padding:10px 14px;border-radius:10px;background:var(--warning-soft);border:1px solid var(--warning);color:var(--brand-ink);">{{ saveWarning }}</div>
+                </sc-if>
                 <div style="display:flex;gap:12px;">
                   <sc-if value="{{ passed }}" hint-placeholder-val="{{ false }}">
                     <x-import component-from-global-scope="Ds44iDigitalDesignSystem_019ddf.Button" onClick="{{ goHome }}" hint-size="auto,46px">Back to the house →</x-import>
@@ -8627,13 +8638,77 @@ class Component extends DCLogic {
     }
   };
 
+  // Signed-in person, supplied by portal-boot.js (window.__PORTAL). The props
+  // fallback keeps the design-tool preview working when no session exists.
   user() {
+    const P = window.__PORTAL;
+    const pu = P && P.user;
+    if (pu) {
+      return {
+        id: pu.id,
+        name: (pu.name || pu.email || 'Trainee').trim(),
+        group: pu.group_name || '',
+        role: pu.role || 'student',
+        avatar: '',
+        groupLogo: '',
+      };
+    }
     return {
+      id: 0,
       name: this.props.userName ?? 'Sally Sales',
       group: this.props.userGroup ?? 'CF Digital',
+      role: 'student',
       avatar: 'uploads/sally.jpg',
       groupLogo: 'uploads/CFDigital_logo.svg',
     };
+  }
+  isStudent() { return this.user().role === 'student'; }
+  initials() {
+    const parts = this.user().name.split(/\s+/).filter(Boolean);
+    const a = parts[0] ? parts[0][0] : '';
+    const b = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (a + b).toUpperCase() || '?';
+  }
+  // Students unlock courses strictly in hub order: only the first unfinished
+  // course is open. Trainers and admins can open anything.
+  isGated(id) {
+    if (!this.isStudent()) return false;
+    if (this.state.progress[id]) return false;
+    return this.nextModule() !== id;
+  }
+  signOut = () => {
+    this.cancelSpeech();
+    const P = window.__PORTAL;
+    const done = () => { window.location.replace('login.html'); };
+    if (!P || !P.csrf) { done(); return; }
+    fetch('api/auth.php?action=logout', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': P.csrf }, body: '{}' })
+      .then(done, done);
+  };
+  // Called when a quiz is passed: update the hub immediately, then persist to the server.
+  recordPass(mod, score, total) {
+    const entry = { score, total, date: new Date().toISOString(), method: 'quiz' };
+    this.saveProgress({ ...this.state.progress, [mod]: entry });
+    const P = window.__PORTAL;
+    if (!P || !P.csrf) return;
+    fetch('api/progress.php?action=save', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': P.csrf },
+      body: JSON.stringify({ course_id: mod, score, total }),
+    })
+      .then((r) => {
+        if (r.status === 401) { window.location.replace('login.html?next=' + encodeURIComponent('index.html')); return null; }
+        return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status));
+      })
+      .then((d) => {
+        if (d && d.progress && typeof d.progress === 'object' && !Array.isArray(d.progress)) {
+          P.progress = d.progress;
+          this.setState({ progress: { ...this.state.progress, ...d.progress }, saveWarning: '' });
+        }
+      })
+      .catch((e) => {
+        console.warn('[portal] progress not saved to server', e);
+        this.setState({ saveWarning: 'Your pass was recorded on this device but could not be saved to the server. Check your connection; if it still shows as incomplete later, retake the quiz.' });
+      });
   }
 
   revealSty(on, base) {
@@ -8646,20 +8721,25 @@ class Component extends DCLogic {
   }
 
   storageKey() {
-    return '44i-dh-progress:' + this.user().name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const u = this.user();
+    const key = u.id ? 'u' + u.id : u.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return '44i-dh-progress:' + key;
   }
 
   componentDidMount() {
-    try {
-      const p = JSON.parse(localStorage.getItem(this.storageKey()) || '{}');
-      const seeded = { ...(p && typeof p === 'object' ? p : {}) };
-      // TESTING: mark all Digital 101 modules complete (Online Visibility + Content Marketing).
-      const d101 = ['dh', 'gbp', 'fourge', 'web', 'chat', 'ada', 'seo', 'lp', 'email', 'smm', 'rtv', 'llo', 'rep'];
-      const stamp = new Date().toISOString();
-      d101.forEach((id) => { if (!seeded[id]) seeded[id] = { score: 10, total: 10, date: stamp }; });
-      this.setState({ progress: seeded });
-      try { localStorage.setItem(this.storageKey(), JSON.stringify(seeded)); } catch (e) {}
-    } catch (e) { this.setState({ progress: {} }); }
+    // Progress comes from the server for signed-in people; the local copy is only
+    // a fallback for the design-tool preview (no session).
+    const P = window.__PORTAL;
+    let progress = {};
+    if (P && P.progress && typeof P.progress === 'object' && !Array.isArray(P.progress)) {
+      progress = { ...P.progress };
+    } else {
+      try {
+        const p = JSON.parse(localStorage.getItem(this.storageKey()) || '{}');
+        progress = p && typeof p === 'object' && !Array.isArray(p) ? p : {};
+      } catch (e) { progress = {}; }
+    }
+    this.setState({ progress });
     // Hidden test shortcut: press "f" twice quickly to fast-forward narration.
     this._onKey = (e) => {
       const t = e.target;
@@ -8784,7 +8864,14 @@ class Component extends DCLogic {
   ytvQuiz() { return [{"section":3,"text":"What does an advertiser choose first?","options":["The channels and the geography","The programme","The demographic profile of the household","The daypart and the frequency of the schedule"],"correct":0,"why":"Channels and geography come first."},{"section":3,"text":"What does the second mechanic allow?","options":["Increasing the budget partway through a flight","Switching channels once the campaign has launched","Narrowing the audience further, if it’s worth doing","Adding a second geographic area without having to change anything about the buy"],"correct":2,"why":"Narrow further only if it’s worth doing."},{"section":3,"text":"Why include a QR code?","options":["To measure how many households saw the advertisement","To verify the advertisement played in full","To let the client preview the finished spot before launch","To give a television viewer a way to respond"],"correct":3,"why":"A response path for a television viewer."},{"section":4,"text":"YouTube TV is…","options":["The video platform where people search for content","A live pay-television service — local channels, national channels, sport","A streaming library of on-demand films and series","A free, ad-supported service that requires no subscription of any kind"],"correct":1,"why":"Live pay television — not the video platform."},{"section":4,"text":"“Co-viewing” means…","options":["More than one person watching the same screen","Watching the same programme on two devices","A household subscribing to several services at once","Two advertisers appearing in the same commercial break"],"correct":0,"why":"One screen, several viewers."},{"section":4,"text":"“First-party data” here refers to…","options":["Information the client supplies from their own records","Data purchased from a third-party consumer provider","Google’s own account information, usable for optional targeting","Viewing information that the television set itself reports back directly"],"correct":2,"why":"Google’s own account data, optional."},{"section":2,"text":"Which is the strongest fit?","options":["A client with a very small budget spread across a wide region","A business whose customers have never once held a television subscription","A client who wants their ad to appear inside a specific programme","A community credit union, because trust is built on familiar local channels"],"correct":3,"why":"Trust built on familiar local channels."},{"section":5,"text":"What is the core benefit?","options":["A lower cost per thousand than broadcast television","Reaching households that cancelled cable but still watch the same channels","Guaranteed placement in the local evening news","A household-level record of everybody who responded to the advertisement"],"correct":1,"why":"Cord-cutters a cable buy can’t reach."},{"section":7,"text":"A client asks whether this is the YouTube product already pitched. What do you say?","options":["Confirm that they are two versions of the same platform","Explain that the two products are usually bought together","That one’s the video platform; this is live television","Suggest reviewing both proposals side by side"],"correct":2,"why":"Two products, one brand."},{"section":7,"text":"What should you settle at the first meeting?","options":["That a smaller area properly covered beats a wide area barely touched","That the campaign will include a QR code on every advertisement","That results will be reviewed against their broadcast schedule","That the client will supply a fifteen-second cut-down of their existing commercial"],"correct":0,"why":"Coverage beats breadth."}];
   }
 
-  quizData() { if (this.isGenericProcess()) return this.processQuiz()[this.state.activeModule] || []; return this.state.activeModule === 'net' ? this.netQuiz() : this.state.activeModule === 'pri' ? this.priQuiz() : this.state.activeModule === 'hulu' ? this.huluQuiz() : this.state.activeModule === 'stv' ? this.stvQuiz() : this.state.activeModule === 'ytv' ? this.ytvQuiz() : this.state.activeModule === 'adr' ? this.adrQuiz() : this.state.activeModule === 'sma' ? this.smaQuiz() : this.state.activeModule === 'sda' ? this.sdaQuiz() : this.state.activeModule === 'ott' ? this.ottQuiz() : this.state.activeModule === 'mat' ? this.matQuiz() : this.state.activeModule === 'aud' ? this.audQuiz() : this.state.activeModule === 'pv' ? this.pvQuiz() : this.state.activeModule === 'nat' ? this.natQuiz() : this.state.activeModule === 'yt' ? this.ytQuiz() : this.state.activeModule === 'geo' ? this.geoQuiz() : this.state.activeModule === 'evt' ? this.evtQuiz() : this.state.activeModule === 'crm' ? this.crmQuiz() : this.state.activeModule === 'sem' ? this.semQuiz() : this.state.activeModule === 'tda' ? this.tdaQuiz() : this.state.activeModule === 'dda' ? this.ddaQuiz() : this.state.activeModule === 'smm' ? this.smmQuiz() : this.state.activeModule === 'llo' ? this.lloQuiz() : this.state.activeModule === 'rep' ? this.repQuiz() : this.state.activeModule === 'email' ? this.emailQuiz() : this.state.activeModule === 'fourge' ? this.fourgeQuiz() : this.state.activeModule === 'rtv' ? this.rtvQuiz() : this.state.activeModule === 'dh' ? this.dhQuiz() : this.state.activeModule === 'p1' ? this.p1Quiz() : this.state.activeModule === 'seo' ? this.seoQuiz() : this.state.activeModule === 'lp' ? this.lpQuiz() : this.state.activeModule === 'web' ? this.webQuiz() : this.state.activeModule === 'chat' ? this.chatQuiz() : this.state.activeModule === 'ada' ? this.adaQuiz() : this.gbpQuiz(); }
+  // Admin-edited quizzes (from the admin panel) take precedence over the built-in questions.
+  quizData() {
+    const P = window.__PORTAL;
+    const ov = P && P.overrides && P.overrides.quizzes && P.overrides.quizzes[this.state.activeModule];
+    if (Array.isArray(ov) && ov.length) return ov;
+    return this.baseQuizData();
+  }
+  baseQuizData() { if (this.isGenericProcess()) return this.processQuiz()[this.state.activeModule] || []; return this.state.activeModule === 'net' ? this.netQuiz() : this.state.activeModule === 'pri' ? this.priQuiz() : this.state.activeModule === 'hulu' ? this.huluQuiz() : this.state.activeModule === 'stv' ? this.stvQuiz() : this.state.activeModule === 'ytv' ? this.ytvQuiz() : this.state.activeModule === 'adr' ? this.adrQuiz() : this.state.activeModule === 'sma' ? this.smaQuiz() : this.state.activeModule === 'sda' ? this.sdaQuiz() : this.state.activeModule === 'ott' ? this.ottQuiz() : this.state.activeModule === 'mat' ? this.matQuiz() : this.state.activeModule === 'aud' ? this.audQuiz() : this.state.activeModule === 'pv' ? this.pvQuiz() : this.state.activeModule === 'nat' ? this.natQuiz() : this.state.activeModule === 'yt' ? this.ytQuiz() : this.state.activeModule === 'geo' ? this.geoQuiz() : this.state.activeModule === 'evt' ? this.evtQuiz() : this.state.activeModule === 'crm' ? this.crmQuiz() : this.state.activeModule === 'sem' ? this.semQuiz() : this.state.activeModule === 'tda' ? this.tdaQuiz() : this.state.activeModule === 'dda' ? this.ddaQuiz() : this.state.activeModule === 'smm' ? this.smmQuiz() : this.state.activeModule === 'llo' ? this.lloQuiz() : this.state.activeModule === 'rep' ? this.repQuiz() : this.state.activeModule === 'email' ? this.emailQuiz() : this.state.activeModule === 'fourge' ? this.fourgeQuiz() : this.state.activeModule === 'rtv' ? this.rtvQuiz() : this.state.activeModule === 'dh' ? this.dhQuiz() : this.state.activeModule === 'p1' ? this.p1Quiz() : this.state.activeModule === 'seo' ? this.seoQuiz() : this.state.activeModule === 'lp' ? this.lpQuiz() : this.state.activeModule === 'web' ? this.webQuiz() : this.state.activeModule === 'chat' ? this.chatQuiz() : this.state.activeModule === 'ada' ? this.adaQuiz() : this.gbpQuiz(); }
 
   semQuiz() {
     return [
@@ -9282,12 +9369,13 @@ class Component extends DCLogic {
     const map = { 'Digital House': 'dh', 'Fourge Websites': 'fourge', 'Email Marketing': 'email', 'Social Media Marketing': 'smm', 'Local Listing Optimization': 'llo', 'Reputation Management': 'rep', 'Radio to Video Ads': 'rtv', 'Search Engine Marketing': 'sem', 'Targeted Display Ads': 'tda', 'Dynamic Display Ads': 'dda', 'Geofence Targeting': 'geo', 'Event Targeting': 'evt', 'CRM Targeting': 'crm', 'Addressable Targeting': 'adr', 'Social Media Ads': 'sma', 'Social Display Ads': 'sda', 'Social OTT / CTV Ads': 'ott', 'Mobile Audience Targeting': 'mat', 'Programmatic Audio Ads': 'aud', 'Programmatic Video Ads': 'pv', 'Native Advertising': 'nat', 'YouTube Ads': 'yt', 'Streaming TV Ads': 'stv', 'YouTube TV Ads': 'ytv', 'Amazon Prime Ads': 'pri', 'Hulu Ads': 'hulu', 'Netflix Ads': 'net', 'Google Business Profile': 'gbp', 'SEO / AEO': 'seo', 'Targeted Landing Pages': 'lp', 'Mobile-First Website': 'web', 'Automated Chat': 'chat', 'Website Accessibility': 'ada' };
     const id = map[name];
     if (!id) return 'locked';
-    return this.state.progress[id] ? 'done' : 'open';
+    if (this.state.progress[id]) return 'done';
+    return this.isGated(id) ? 'gated' : 'open';
   }
 
   moduleKey() { return this.state.activeModule; }
 
-  moduleIdFor(name) { return ({ 'Digital House': 'dh', 'Fourge Websites': 'fourge', 'Email Marketing': 'email', 'Social Media Marketing': 'smm', 'Local Listing Optimization': 'llo', 'Reputation Management': 'rep', 'Radio to Video Ads': 'rtv', 'Search Engine Marketing': 'sem', 'Targeted Display Ads': 'tda', 'Dynamic Display Ads': 'dda', 'Geofence Targeting': 'geo', 'Event Targeting': 'evt', 'CRM Targeting': 'crm', 'Addressable Targeting': 'adr', 'Social Media Ads': 'sma', 'Social Display Ads': 'sda', 'Social OTT / CTV Ads': 'ott', 'Mobile Audience Targeting': 'mat', 'Programmatic Audio Ads': 'aud', 'Programmatic Video Ads': 'pv', 'Native Advertising': 'nat', 'YouTube Ads': 'yt', 'Streaming TV Ads': 'stv', 'YouTube TV Ads': 'ytv', 'Amazon Prime Ads': 'pri', 'Hulu Ads': 'hulu', 'Google Business Profile': 'gbp', 'SEO / AEO': 'seo', 'Targeted Landing Pages': 'lp', 'Mobile-First Website': 'web', 'Automated Chat': 'chat', 'Website Accessibility': 'ada' })[name] || null; }
+  moduleIdFor(name) { return ({ 'Digital House': 'dh', 'Fourge Websites': 'fourge', 'Email Marketing': 'email', 'Social Media Marketing': 'smm', 'Local Listing Optimization': 'llo', 'Reputation Management': 'rep', 'Radio to Video Ads': 'rtv', 'Search Engine Marketing': 'sem', 'Targeted Display Ads': 'tda', 'Dynamic Display Ads': 'dda', 'Geofence Targeting': 'geo', 'Event Targeting': 'evt', 'CRM Targeting': 'crm', 'Addressable Targeting': 'adr', 'Social Media Ads': 'sma', 'Social Display Ads': 'sda', 'Social OTT / CTV Ads': 'ott', 'Mobile Audience Targeting': 'mat', 'Programmatic Audio Ads': 'aud', 'Programmatic Video Ads': 'pv', 'Native Advertising': 'nat', 'YouTube Ads': 'yt', 'Streaming TV Ads': 'stv', 'YouTube TV Ads': 'ytv', 'Amazon Prime Ads': 'pri', 'Hulu Ads': 'hulu', 'Netflix Ads': 'net', 'Google Business Profile': 'gbp', 'SEO / AEO': 'seo', 'Targeted Landing Pages': 'lp', 'Mobile-First Website': 'web', 'Automated Chat': 'chat', 'Website Accessibility': 'ada' })[name] || null; }
 
   nextModule() {
     const procOrder = ['p1', 'p2', 'p4', 'p3', 'p5', 'p6', 'p7', 'p9', 'p10', 'p11'];
@@ -9302,6 +9390,7 @@ class Component extends DCLogic {
   }
 
   openModule = (id) => {
+    if (this.isGated(id)) return;
     const done = !!this.state.progress[id];
     const start = done ? 7 : 0;
     const allDone = {};
@@ -9329,7 +9418,8 @@ class Component extends DCLogic {
 
   renderVals() {
     const secs = this.sectionsData();
-    const threshold = this.props.passThreshold ?? 80;
+    const serverThreshold = window.__PORTAL && window.__PORTAL.settings && Number(window.__PORTAL.settings.pass_threshold);
+    const threshold = (serverThreshold >= 50 && serverThreshold <= 100) ? serverThreshold : (this.props.passThreshold ?? 80);
     const showPricing = this.props.showPricing ?? true;
     const done = (this.state.progress.dh ? 1 : 0) + (this.state.progress.fourge ? 1 : 0) + (this.state.progress.email ? 1 : 0) + (this.state.progress.smm ? 1 : 0) + (this.state.progress.llo ? 1 : 0) + (this.state.progress.rep ? 1 : 0) + (this.state.progress.rtv ? 1 : 0) + (this.state.progress.sem ? 1 : 0) + (this.state.progress.tda ? 1 : 0) + (this.state.progress.dda ? 1 : 0) + (this.state.progress.geo ? 1 : 0) + (this.state.progress.evt ? 1 : 0) + (this.state.progress.crm ? 1 : 0) + (this.state.progress.adr ? 1 : 0) + (this.state.progress.sma ? 1 : 0) + (this.state.progress.sda ? 1 : 0) + (this.state.progress.ott ? 1 : 0) + (this.state.progress.mat ? 1 : 0) + (this.state.progress.aud ? 1 : 0) + (this.state.progress.gbp ? 1 : 0) + (this.state.progress.seo ? 1 : 0) + (this.state.progress.lp ? 1 : 0) + (this.state.progress.web ? 1 : 0) + (this.state.progress.chat ? 1 : 0) + (this.state.progress.ada ? 1 : 0);
 
@@ -9339,12 +9429,13 @@ class Component extends DCLogic {
       done: { text: '\u2713 Complete', sty: { background: 'var(--success-soft)', color: 'var(--success)', border: '1px solid transparent' } },
       open: { text: 'Start \u2192', sty: { background: 'var(--accent-green-deep)', color: '#fff', border: '1px solid transparent', boxShadow: 'var(--shadow-sm)' } },
       locked: { text: 'Coming soon', sty: { background: 'var(--gray-50)', color: 'var(--gray-400)', border: '1px solid var(--gray-200)' } },
+      gated: { text: '🔒 Locked', sty: { background: 'var(--gray-50)', color: 'var(--gray-400)', border: '1px solid var(--gray-200)' } },
     };
     const processRows = procList.map((m, ri) => {
       const isDone = !!(m.id && this.state.progress[m.id]);
       if (isDone) procDone += 1;
-      const st = isDone ? 'done' : (m.id ? 'open' : 'locked');
-      const clickable = !!m.id;
+      const st = isDone ? 'done' : (m.id ? (this.isGated(m.id) ? 'gated' : 'open') : 'locked');
+      const clickable = !!m.id && st !== 'gated';
       const chip = procChips[st];
       return {
         numLabel: String(ri + 1),
@@ -9368,11 +9459,12 @@ class Component extends DCLogic {
         num += 1;
         const st = this.status(name);
         if (st === 'done') secDone += 1;
-        const clickable = st !== 'locked';
+        const clickable = st !== 'locked' && st !== 'gated';
         const chips = {
           done: { text: '\u2713 Complete', sty: { background: 'var(--success-soft)', color: 'var(--success)', border: '1px solid transparent' } },
           open: { text: 'Start \u2192', sty: { background: 'var(--accent-green-deep)', color: '#fff', border: '1px solid transparent', boxShadow: 'var(--shadow-sm)' } },
           locked: { text: 'Coming soon', sty: { background: 'var(--gray-50)', color: 'var(--gray-400)', border: '1px solid var(--gray-200)' } },
+          gated: { text: '\ud83d\udd12 Locked', sty: { background: 'var(--gray-50)', color: 'var(--gray-400)', border: '1px solid var(--gray-200)' } },
         };
         const chip = chips[st];
         return {
@@ -9511,6 +9603,11 @@ class Component extends DCLogic {
       userAvatar: this.user().avatar,
       userGroupLogo: this.user().groupLogo,
       userGroup: this.user().group,
+      userInitials: this.initials(),
+      showAdminLink: ['trainer', 'admin', 'superadmin'].includes(this.user().role),
+      signOut: this.signOut,
+      saveWarning: this.state.saveWarning || '',
+      hasSaveWarning: !!this.state.saveWarning,
       eyebrowMsg: (() => {
         const first = this.user().name.split(' ')[0];
         if (certified === 3) return 'You\u2019re certified, ' + first + '.';
@@ -10212,7 +10309,7 @@ class Component extends DCLogic {
         let sc = 0;
         qs.forEach((q, i) => { if (this.state.answers[i] === q.correct) sc += 1; });
         if (sc >= passNeed) {
-          this.saveProgress({ ...this.state.progress, [mod]: { score: sc, total: qs.length, date: new Date().toISOString() } });
+          this.recordPass(mod, sc, qs.length);
         }
       },
       retryQuiz: () => { this.setState({ answers: {}, submitted: false, postReview: false }); },

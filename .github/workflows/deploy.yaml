@@ -20,9 +20,12 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           local-dir: ./
+          # Large media files: allow up to 10 minutes per FTP operation instead of the 30 s default.
+          timeout: 600000
           # Only exclude files that should never be on the server.
-          # admin/ api/ data/ (manifest + .htaccess) assets/ and all site files ARE included.
-          # uploads/ (1.4 GB of training video) is synced separately, not by this action.
+          # admin/ api/ data/ (manifest + .htaccess) assets/ uploads/ and all site files ARE included.
+          # uploads/ holds every training video and screenshot (~1.4 GB). The first run after
+          # enabling it uploads everything; later runs only send files that changed.
           # The live database (data/portal.sqlite) and admin-uploaded videos
           # (uploads/custom/) are created on the server and never touched here.
           exclude: |
@@ -31,7 +34,9 @@ jobs:
             **/node_modules/**
             **/scraps/**
             **/screenshots/**
-            **/uploads/**
+            **/uploads/custom/**
+            **/uploads/DC - Process*/**
+            **/uploads/*.md
             **/tools/**
             **/vo-scripts/**
             **/data/*.sqlite*

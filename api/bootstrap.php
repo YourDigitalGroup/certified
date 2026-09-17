@@ -265,6 +265,8 @@ function public_settings(): array
     return [
         'pass_threshold' => (int)setting_get('pass_threshold', 100),
         'portal_title' => (string)setting_get('portal_title', 'Digital Certification'),
+        // True when the server can generate narration; the portal then routes clips through api/tts.php.
+        'tts' => defined('ELEVENLABS_API_KEY') && ELEVENLABS_API_KEY !== '',
     ];
 }
 

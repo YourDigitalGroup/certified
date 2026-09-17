@@ -137,11 +137,37 @@ for (const course of courses) {
   course.type = course.videos.length > 0 ? 'video' : 'interactive';
 }
 
-// ---- 6. Write --------------------------------------------------------------
+// ---- 6. Narration allowlist ----------------------------------------------
+// api/tts.php only synthesizes text that appears in a course script. Collect every
+// narration segment the portal can ask for (per module and step) and store its hash.
+import { createHash } from 'node:crypto';
+const narrationHashes = new Set();
+let narrationCount = 0;
+for (const course of courses) {
+  c.state = { ...c.state, activeModule: course.id };
+  let steps = 8;
+  try { steps = c.quizStep(); } catch (e) { /* keep default */ }
+  for (let i = 0; i < steps; i++) {
+    let segs = [];
+    try { segs = c.segmentsFor(i) || []; } catch (e) { segs = []; }
+    for (const s of segs) {
+      const t = String(s && s.text || '');
+      if (!t.trim()) continue;
+      narrationHashes.add(createHash('sha1').update(t, 'utf8').digest('hex'));
+      narrationCount++;
+    }
+  }
+  if (course.id === 'gbp') {
+    try { const t = String(c.scriptFor(0) || ''); if (t) narrationHashes.add(createHash('sha1').update(t, 'utf8').digest('hex')); } catch (e) { /* optional */ }
+  }
+}
+
+// ---- 7. Write --------------------------------------------------------------
 const manifest = {
   generatedAt: new Date().toISOString(),
   source: 'index.html',
   sections: ['Our Process', ...sections.map((s) => s.name)],
+  narration_hashes: [...narrationHashes].sort(),
   courses,
 };
 mkdirSync(join(root, 'data'), { recursive: true });
@@ -151,5 +177,5 @@ writeFileSync(out, JSON.stringify(manifest, null, 2) + '\n');
 const withVideo = courses.filter((x) => x.videos.length).length;
 const withQuiz = courses.filter((x) => x.quiz.length).length;
 console.log(`Wrote ${out}`);
-console.log(`${courses.length} courses · ${withVideo} with videos · ${withQuiz} with quizzes`);
+console.log(`${courses.length} courses · ${withVideo} with videos · ${withQuiz} with quizzes · ${narrationCount} narration segments (${narrationHashes.size} unique)`);
 for (const x of courses) console.log(`  ${String(x.order).padStart(2)}  ${x.id.padEnd(7)} ${x.title.padEnd(30)} videos=${String(x.videos.length).padStart(2)} quiz=${String(x.quiz.length).padStart(2)}`);

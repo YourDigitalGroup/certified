@@ -16,6 +16,11 @@
   <style>
     body { margin: 0; background: var(--gray-50); }
     image-slot::part(frame) { background: transparent; }
+    /* Shown over a step's video while it buffers; narration waits for it. */
+    .portal-vid-loading { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(247,249,252,0.92); color: var(--brand-navy); font-family: var(--font-sans); font-size: 13px; font-weight: 600; border-radius: inherit; transition: opacity 240ms ease; }
+    .portal-vid-loading.out { opacity: 0; }
+    .portal-vid-loading .spin { width: 30px; height: 30px; border: 3px solid var(--gray-200); border-top-color: var(--brand-blue); border-radius: 50%; animation: portalSpin 0.8s linear infinite; }
+    @keyframes portalSpin { to { transform: rotate(360deg); } }
     @keyframes dhFadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
     @keyframes fgLoadStuck { 0% { width: 3%; } 25% { width: 32%; } 55% { width: 58%; } 80% { width: 78%; } 92% { width: 86%; } 100% { width: 89%; } }
     @keyframes fgDots { 0%,20% { opacity: 0.2; } 50% { opacity: 1; } 80%,100% { opacity: 0.2; } }
@@ -6632,7 +6637,7 @@
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;passThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:100,&quot;min&quot;:50,&quot;max&quot;:100,&quot;step&quot;:5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Certification&quot;},&quot;userName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sally Sales&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;userGroup&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;CF Digital&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;draftVoice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsKey&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;sk_8cdcf1a3e5555b95f281da8ec477596f9e3934120095e3ce&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;21m00Tcm4TlvDq8ikWAM&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice2&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;EXAVITQu4vr4xnSDxMaL&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice3&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;UgBBYS2sOqTuMpoF3BR0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceMale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;nPczCjzI2devNBz1zQrb&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceFemale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;cgSgspJ2msm6clMCkdW9&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;passThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:100,&quot;min&quot;:50,&quot;max&quot;:100,&quot;step&quot;:5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Certification&quot;},&quot;userName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sally Sales&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;userGroup&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;CF Digital&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;draftVoice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsKey&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;21m00Tcm4TlvDq8ikWAM&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice2&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;EXAVITQu4vr4xnSDxMaL&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice3&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;UgBBYS2sOqTuMpoF3BR0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceMale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;nPczCjzI2devNBz1zQrb&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceFemale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;cgSgspJ2msm6clMCkdW9&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;}}">
 class Component extends DCLogic {
   state = { view: 'hub', activeModule: 'gbp', answers: {}, submitted: false, postReview: false, progress: {}, moduleStep: 0, narrDone: {}, voiceOn: true, playingStep: null, paused: false, narrProgress: 0, reviewQueue: null, reviewPos: 0, openLists: {}, typedQuery: '', phoneMapped: false, phoneBoxed: false, s0Title: false, s0P1: false, s0P2: false, s0P3: false, rev: {}, chk: {}, s3box: false, s3listing: false, s5reviews: false, s5map: false, s5bad: false, s5good: false, s5phaseB: false, e5phaseB: false, e0typed: '', e0result: false, e1typed: '', e1result: false, e5showBad: false, e5showFaq: false, em5phaseB: false };
 
@@ -7744,6 +7749,7 @@ class Component extends DCLogic {
     clearInterval(this._seoTypeInt);
     this.clearSeg0();
     this._speakSession = (this._speakSession || 0) + 1;
+    if (this._gateCancel) { const c = this._gateCancel; this._gateCancel = null; c(); }
     try { window.speechSynthesis.cancel(); } catch (e) {}
     if (this._audio) { try { this._audio.pause(); } catch (e) {} this._audio = null; }
   }
@@ -7847,7 +7853,7 @@ class Component extends DCLogic {
   // Sync Section 1's reveals to the ACTUAL audio using ElevenLabs word timestamps,
   // so map swap / green box / paragraphs land on the words no matter the load lag.
   playSeg0Synced(markDone) {
-    const key = (this.props.elevenLabsKey ?? '').trim();
+    const gate = this._gate || Promise.resolve();
     const voice = this.narrVoiceId();
     const text = this.scriptFor(0);
     const session = this._speakSession;
@@ -7874,17 +7880,13 @@ class Component extends DCLogic {
         };
         audio.onended = () => { for (; fired < cues.length; fired += 1) cues[fired].fn(); this._audio = null; markDone(); };
         audio.onerror = fallback;
-        audio.play().then(() => { this._audio = audio; }).catch(fallback);
+        gate.then(() => { if (this._speakSession !== session) return; audio.play().then(() => { this._audio = audio; }).catch(fallback); });
     };
     const ck0 = this.voKey(voice, text);
     this.voGet(ck0).then((cached) => {
       if (this._speakSession !== session) return;
       if (cached) { useData(cached); return; }
-      fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice + '/with-timestamps', {
-        method: 'POST',
-        headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
-      })
+      this.ttsFetch(voice, text, true)
         .then((r) => { if (!r.ok) throw new Error('tts'); return r.json(); })
         .then((data) => { this.voPut(ck0, data); useData(data); })
         .catch(fallback);
@@ -8321,7 +8323,7 @@ class Component extends DCLogic {
   }
 
   playStepSynced(i, markDone) {
-    const key = (this.props.elevenLabsKey ?? '').trim();
+    const gate = this._gate || Promise.resolve();
     const voice = this.narrVoiceId();
     const male = this.repVoiceId();
     const segs = this.segmentsFor(i);
@@ -8359,15 +8361,13 @@ class Component extends DCLogic {
         };
         audio.onended = () => { for (; fired < segCues.length; fired += 1) segCues[fired].fn(); this._audio = null; playFrom(si + 1); };
         audio.onerror = fallback;
-        audio.play().then(() => { this._audio = audio; }).catch(fallback);
+        // The clip is fetched while the video buffers; only playback waits for the video.
+        gate.then(() => { if (this._speakSession !== session) return; audio.play().then(() => { this._audio = audio; }).catch(fallback); });
       };
       this.voGet(ck).then((cached) => {
         if (this._speakSession !== session) return;
         if (cached) { useData(cached); return; }
-        fetch('https://api.elevenlabs.io/v1/text-to-speech/' + vid + '/with-timestamps', {
-          method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: seg.text, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
-        }).then((r) => { if (!r.ok) throw new Error('tts'); return r.json(); })
+        this.ttsFetch(vid, seg.text, true).then((r) => { if (!r.ok) throw new Error('tts'); return r.json(); })
           .then((data) => { this.voPut(ck, data); useData(data); })
           .catch(fallback);
       });
@@ -8395,9 +8395,11 @@ class Component extends DCLogic {
     this.setState({ playingStep: i, paused: false, narrProgress: 0, narrChar: null });
     // Priority: ElevenLabs (when a key is set) → produced MP3 in uploads/vo/ → browser speech.
     const session = this._speakSession = (this._speakSession || 0) + 1;
-    const tryLocal = () => this.playUrl('uploads/vo/gbp-' + (i + 1) + '.mp3', 0, 1, markDone, () => this.speak(i, markDone));
+    // Hold every narration path until the step's video is ready to play.
+    const gate = this._gate = this.mediaGate(i, session);
+    const tryLocal = () => gate.then(() => { if (this._speakSession === session) this.playUrl('uploads/vo/gbp-' + (i + 1) + '.mp3', 0, 1, markDone, () => this.speak(i, markDone)); });
     // Draft mode: use the free browser voice (skips ElevenLabs) so authoring doesn't burn credits.
-    const key = (this.props.draftVoice ?? false) ? '' : (this.props.elevenLabsKey ?? '').trim();
+    const key = (this.props.draftVoice ?? false) ? '' : this.ttsKey();
     if (this.state.activeModule === 'gbp' && i === 0) {
       this.setState({ s0Title: false, s0P1: false, s0P2: false, s0P3: false, typedQuery: '', phoneMapped: false, phoneBoxed: false });
       if (key) { this.playSeg0Synced(markDone); return; }
@@ -8406,7 +8408,7 @@ class Component extends DCLogic {
     if (i >= (this.state.activeModule === 'gbp' ? 1 : 0) && i < this.quizStep()) {
       this.setState({ rev: {}, chk: {}, dh0house: null, semTyped: '', semResult: false, sem5phaseB: false, evt5phaseB: false, sem5stage: 0, sem5typed: '', dda5phaseB: false, tda5phaseB: false, crm5phaseB: false, crm5ad: 'none', s3box: false, s3listing: false, s5reviews: false, s5map: false, s5bad: false, s5good: false, s5phaseB: false, e5phaseB: false, e0typed: '', e0result: false, e1typed: '', e1result: false, e5showBad: false, e5showFaq: false, em5phaseB: false, fg5phaseB: false, fg5img: 'a', sm5phaseB: false, ll5phaseB: false, l0typed: '', l0result: false, l0land: false, l5phaseB: false, l5showBefore: false, l5showBad: false, l5showFaq: false, w0stage: 'search', w0typed: '', w5phaseB: false, w5showBefore: false, w5showChat: false, w5showAfter: false, c5phaseB: false, c5showBefore: false, c5showAfter: false, c5showChat: false, a5phaseB: false, a5showBefore: false, a5showAfter: false });
       if (key) { this.playStepSynced(i, markDone); return; }
-      this.timedReveal(i, markDone);
+      gate.then(() => { if (this._speakSession === session) this.timedReveal(i, markDone); });
       return;
     }
     if (!key) { tryLocal(); return; }
@@ -8419,15 +8421,11 @@ class Component extends DCLogic {
       const vid = segs[si].male ? maleVoice : narrVoice;
       const ck = this.voKey(vid, segs[si].text);
       const next = () => { const g = (segs[si].pause || 0) + ((segs[si + 1] && segs[si + 1].pause) || 0); setTimeout(() => playSeg(si + 1), g); };
-      const go = (blob) => this.playUrl(URL.createObjectURL(blob), si / segs.length, 1 / segs.length, next, tryLocal);
+      const go = (blob) => gate.then(() => { if (this._speakSession === session) this.playUrl(URL.createObjectURL(blob), si / segs.length, 1 / segs.length, next, tryLocal); });
       this.voGet(ck).then((cachedBlob) => {
         if (this._speakSession !== session) return;
         if (cachedBlob) { go(cachedBlob); return; }
-        fetch('https://api.elevenlabs.io/v1/text-to-speech/' + vid, {
-          method: 'POST',
-          headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: segs[si].text, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
-        })
+        this.ttsFetch(vid, segs[si].text, false)
           .then((r) => { if (!r.ok) throw new Error('tts'); return r.blob(); })
           .then((b) => {
             this.voPut(ck, b);
@@ -8720,6 +8718,94 @@ class Component extends DCLogic {
     };
   }
 
+  // ---- Narration source -------------------------------------------------------
+  // When the server has an ElevenLabs key, clips come from api/tts.php, which generates
+  // each one once and serves the cached copy to everyone afterwards. Otherwise fall back
+  // to a key in props (design-tool preview) and finally to the browser voice.
+  ttsKey() {
+    const P = window.__PORTAL;
+    if (P && P.settings && P.settings.tts && P.csrf) return 'server';
+    return (this.props.elevenLabsKey ?? '').trim();
+  }
+  ttsFetch(voice, text, timestamps) {
+    const P = window.__PORTAL;
+    if (P && P.settings && P.settings.tts && P.csrf) {
+      return fetch('api/tts.php', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': P.csrf },
+        body: JSON.stringify({ voice, text, timestamps: !!timestamps }),
+      });
+    }
+    return fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice + (timestamps ? '/with-timestamps' : ''), {
+      method: 'POST',
+      headers: { 'xi-api-key': (this.props.elevenLabsKey ?? '').trim(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
+    });
+  }
+
+  // ---- Media gate --------------------------------------------------------------
+  // A step's video starts downloading the moment the step renders. Narration waits
+  // until every video in the step can play through (or is fully buffered), showing a
+  // "Loading video…" panel over it meanwhile. A stalled video never blocks the lesson
+  // for more than MAX_WAIT.
+  stepVideos(i) {
+    return Array.from(document.querySelectorAll('[id$="-step-' + i + '"] video')).filter((v) => v.getAttribute('src'));
+  }
+  mediaGate(i, session) {
+    const MAX_WAIT = 15000;
+    const EVENTS = ['canplaythrough', 'canplay', 'progress', 'loadeddata', 'error', 'stalled'];
+    const canPlay = (v) => !!v.error || v.readyState >= 4 || (v.duration > 0 && v.buffered.length > 0 && v.buffered.end(v.buffered.length - 1) >= v.duration - 0.25);
+    return new Promise((resolve) => {
+      let done = false, timer = null, waiting = [], overlays = [];
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        waiting.forEach((v) => EVENTS.forEach((ev) => v.removeEventListener(ev, check)));
+        overlays.forEach((o) => { o.classList.add('out'); setTimeout(() => o.remove(), 260); });
+        if (this.state.mediaLoading === i) this.setState({ mediaLoading: null });
+        if (this._gateCancel === finish) this._gateCancel = null;
+        resolve();
+      };
+      const check = () => { if (this._speakSession !== session || waiting.every(canPlay)) finish(); };
+      const start = () => {
+        if (this._speakSession !== session) { finish(); return; }
+        waiting = this.stepVideos(i).filter((v) => !canPlay(v));
+        if (!waiting.length) { finish(); return; }
+        this._gateCancel = finish;
+        this.setState({ mediaLoading: i });
+        waiting.forEach((v) => {
+          EVENTS.forEach((ev) => v.addEventListener(ev, check));
+          if (v.preload === 'none') v.preload = 'auto';
+          overlays.push(this.showVideoLoader(v));
+        });
+        timer = setTimeout(finish, MAX_WAIT);
+      };
+      // The step's DOM may commit a frame after narrate() is called.
+      if (this.stepVideos(i).length) start(); else requestAnimationFrame(() => requestAnimationFrame(start));
+    });
+  }
+  showVideoLoader(v) {
+    const el = document.createElement('div');
+    el.className = 'portal-vid-loading';
+    el.innerHTML = '<div class="spin"></div><div>Loading video…</div>';
+    const parent = v.parentElement;
+    if (parent) {
+      if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+      parent.appendChild(el);
+    }
+    return el;
+  }
+
+  // Admin-only test shortcut: fills in the correct answer for every quiz question.
+  fillCorrectAnswers() {
+    if (!['admin', 'superadmin'].includes(this.user().role)) return;
+    if (this.state.view !== 'module' || this.state.moduleStep < this.quizStep() || this.state.submitted) return;
+    const answers = {};
+    this.quizData().forEach((q, i) => { answers[i] = q.correct; });
+    this.setState({ answers });
+  }
+
   storageKey() {
     const u = this.user();
     const key = u.id ? 'u' + u.id : u.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -8740,14 +8826,21 @@ class Component extends DCLogic {
       } catch (e) { progress = {}; }
     }
     this.setState({ progress });
-    // Hidden test shortcut: press "f" twice quickly to fast-forward narration.
+    // Hidden test shortcuts: press "f" twice quickly to fast-forward narration;
+    // admins and super admins can press "a" twice quickly on a quiz to fill in the correct answers.
     this._onKey = (e) => {
       const t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      if (e.key !== 'f' && e.key !== 'F') { this._lastF = 0; return; }
+      const k = String(e.key || '').toLowerCase();
+      if (k !== 'f' && k !== 'a') { this._lastF = 0; this._lastA = 0; return; }
       const now = Date.now();
-      if (now - (this._lastF || 0) < 500) { this._lastF = 0; if (this.state.view === 'module') this.skipNarration(); }
-      else { this._lastF = now; }
+      if (k === 'f') {
+        if (now - (this._lastF || 0) < 500) { this._lastF = 0; if (this.state.view === 'module') this.skipNarration(); }
+        else { this._lastF = now; }
+        return;
+      }
+      if (now - (this._lastA || 0) < 500) { this._lastA = 0; this.fillCorrectAnswers(); }
+      else { this._lastA = now; }
     };
     window.addEventListener('keydown', this._onKey);
   }
@@ -9549,7 +9642,7 @@ class Component extends DCLogic {
         const active = this.state.playingStep === i;
         return ['player' + i, {
           toggle: () => this.togglePlay(i),
-          icon: active && !this.state.paused ? '\u275A\u275A' : '\u25B6',
+          icon: this.state.mediaLoading === i ? '\u2026' : (active && !this.state.paused ? '\u275A\u275A' : '\u25B6'),
           pct: (active ? Math.round(this.state.narrProgress * 100) : (this.state.narrDone[i] ? 100 : 0)) + '%',
         }];
       })),
@@ -10115,7 +10208,7 @@ class Component extends DCLogic {
             stepId: am + '-step-' + i,
             label: 'Section ' + (i + 1) + ': ' + seg.label,
             show: rq ? ms === i : ms >= i,
-            player: { toggle: () => this.togglePlay(i), icon: active && !this.state.paused ? '\u275A\u275A' : '\u25B6', pct: (active ? Math.round(this.state.narrProgress * 100) : (this.state.narrDone[i] ? 100 : 0)) + '%' },
+            player: { toggle: () => this.togglePlay(i), icon: this.state.mediaLoading === i ? '\u2026' : (active && !this.state.paused ? '\u275A\u275A' : '\u25B6'), pct: (active ? Math.round(this.state.narrProgress * 100) : (this.state.narrDone[i] ? 100 : 0)) + '%' },
             hasLeftPhoto: (isPhoto || isGleft || isVideo) && !isWalkSeg && !isP5Tools, notLeftPhoto: !isPhoto && !isGleft && !isVideo && !isWalkSeg && !isP5Tools, hasLaptop: isLap && !isWalkSeg,
             isP5Tools: isP5Tools,
             toolsSlotId: 'p5-tools-photo',

@@ -314,11 +314,63 @@
   // ---------------------------------------------------------------------------
   // People list
   // ---------------------------------------------------------------------------
-  var usersFilter = { q: '', group: '', role: '' };
+  var usersFilter = { q: '', group: '', role: '', stage: '', band: '', sort: 'name' };
+  var STAGES = [
+    { k: 'none', l: 'Not started' }, { k: 'progress', l: 'In progress' }, { k: 'process', l: 'Process complete' },
+    { k: 'd101', l: 'Digital 101 complete' }, { k: 'certified', l: 'Fully certified' },
+  ];
+  var BANDS = [{ k: '0', l: '0%' }, { k: '1', l: '1–25%' }, { k: '2', l: '26–50%' }, { k: '3', l: '51–75%' }, { k: '4', l: '76–99%' }, { k: '5', l: '100%' }];
+  // Stage = the furthest tier a person has fully completed, in the order the portal unlocks them.
+  function stageOf(ids) {
+    var done = {}; (ids || []).forEach(function (id) { done[id] = true; });
+    var courses = S.courses || [];
+    var n = courses.filter(function (c) { return done[c.id]; }).length;
+    if (!n) return 'none';
+    if (courses.length && n >= courses.length) return 'certified';
+    var all = function (list) { return list.length > 0 && list.every(function (c) { return done[c.id]; }); };
+    var process = courses.filter(function (c) { return c.sectionIndex === 0; });
+    var d101 = courses.filter(function (c) { return c.sectionIndex === 1 || c.sectionIndex === 2; });
+    if (all(process) && all(d101)) return 'd101';
+    if (all(process)) return 'process';
+    return 'progress';
+  }
+  function bandOf(n, total) {
+    var pct = total ? Math.round(100 * n / total) : 0;
+    return pct <= 0 ? '0' : pct <= 25 ? '1' : pct <= 50 ? '2' : pct <= 75 ? '3' : pct < 100 ? '4' : '5';
+  }
+  function stageBadge(k) {
+    var cls = { none: 'off', progress: 'info', process: 'warn', d101: 'admin', certified: 'superadmin' }[k] || 'off';
+    var st = STAGES.filter(function (s) { return s.k === k; })[0];
+    return '<span class="badge ' + cls + '">' + esc(st ? st.l : k) + '</span>';
+  }
+  function applyClientFilters(users) {
+    var total = (S.courses || []).length || S.courseCount;
+    var list = users.filter(function (u) {
+      if (usersFilter.stage && stageOf(u.completed_ids) !== usersFilter.stage) return false;
+      if (usersFilter.band && bandOf(u.completed_count || 0, total) !== usersFilter.band) return false;
+      return true;
+    });
+    var s = usersFilter.sort;
+    var byName = function (a, b) { return (a.last_name || '').localeCompare(b.last_name || '') || a.name.localeCompare(b.name); };
+    list.sort(function (a, b) {
+      if (s === 'progress') return (b.completed_count || 0) - (a.completed_count || 0) || byName(a, b);
+      if (s === 'progress_asc') return (a.completed_count || 0) - (b.completed_count || 0) || byName(a, b);
+      if (s === 'login') return (b.last_login_at || '').localeCompare(a.last_login_at || '') || byName(a, b);
+      if (s === 'group') return (a.group_name || '').localeCompare(b.group_name || '') || byName(a, b);
+      if (s === 'newest') return (b.created_at || '').localeCompare(a.created_at || '') || byName(a, b);
+      return byName(a, b);
+    });
+    return list;
+  }
   function viewUsers() {
     if (S.me.role === 'trainer' && usersFilter.group === '' && !usersFilter._touched && S.me.group_name) usersFilter.group = S.me.group_name;
-    return loadUsers({ q: usersFilter.q, group: usersFilter.group, role: usersFilter.role }).then(function (users) {
+    return Promise.all([loadUsers({ q: usersFilter.q, group: usersFilter.group, role: usersFilter.role }), loadCourses()]).then(function (res) {
+      var users = res[0];
       S.users = users;
+      var sel = function (id, opts, val, firstLabel) {
+        return '<select class="input" id="' + id + '"><option value="">' + firstLabel + '</option>' + opts.map(function (o) { return '<option value="' + o.k + '"' + (val === o.k ? ' selected' : '') + '>' + o.l + '</option>'; }).join('') + '</select>';
+      };
+      var sorts = [{ k: 'name', l: 'Sort: Name' }, { k: 'group', l: 'Sort: Group' }, { k: 'progress', l: 'Sort: Most progress' }, { k: 'progress_asc', l: 'Sort: Least progress' }, { k: 'login', l: 'Sort: Last sign-in' }, { k: 'newest', l: 'Sort: Newest' }];
       var html = '<div class="page-head"><div><div class="eyebrow">Directory</div><h1>People</h1><p class="lede">' +
         (can('admin') ? 'Add people one at a time or import a spreadsheet. Click a person to edit their details, access, and completed courses.' : 'Click a person to see and update the courses they have completed.') + '</p></div>' +
         '<div class="row wrap">' + (can('admin') ? '<button class="btn primary" id="u-add">+ Add a person</button><button class="btn" id="u-import">Import CSV</button><a class="btn" href="' + API + 'users.php?action=export">Export CSV</a>' : '') + '</div></div>' +
@@ -327,39 +379,53 @@
             '<div class="search">' + ICONS.search + '<input class="input" id="u-q" placeholder="Search name, email, group, phone" value="' + attr(usersFilter.q) + '"></div>' +
             '<select class="input" id="u-group">' + groupOptions(usersFilter.group, true) + '</select>' +
             '<select class="input" id="u-role"><option value="">All roles</option>' + ROLES.map(function (r) { return '<option value="' + r + '"' + (usersFilter.role === r ? ' selected' : '') + '>' + ROLE_LABEL[r] + '</option>'; }).join('') + '</select>' +
-            '<span class="muted small nowrap">' + users.length + ' ' + (users.length === 1 ? 'person' : 'people') + '</span>' +
+            sel('u-stage', STAGES, usersFilter.stage, 'All stages') +
+            sel('u-band', BANDS, usersFilter.band, 'Any % complete') +
+            '<select class="input" id="u-sort">' + sorts.map(function (o) { return '<option value="' + o.k + '"' + (usersFilter.sort === o.k ? ' selected' : '') + '>' + o.l + '</option>'; }).join('') + '</select>' +
+            '<span class="muted small nowrap" id="u-count"></span>' +
           '</div>' +
-          '<div class="table-wrap" style="margin-top:12px">' + usersTable(users) + '</div>' +
+          '<div class="table-wrap" style="margin-top:12px"></div>' +
         '</div>';
       var main = setMain(html);
-      bindRowLinks(main);
-      var wrap = $('.table-wrap', main), countEl = $('.toolbar .muted', main);
-      var refresh = debounce(function () {
+      var wrap = $('.table-wrap', main), countEl = $('#u-count', main);
+      function render() {
+        if (!wrap || !wrap.isConnected) return;
+        var shown = applyClientFilters(S.users || []);
+        wrap.innerHTML = usersTable(shown);
+        var n = (S.users || []).length;
+        countEl.textContent = shown.length === n ? n + ' ' + (n === 1 ? 'person' : 'people') : shown.length + ' of ' + n + ' people';
+        bindRowLinks(wrap);
+      }
+      render();
+      var reload = debounce(function () {
         usersFilter._touched = true;
         loadUsers({ q: usersFilter.q, group: usersFilter.group, role: usersFilter.role }).then(function (list) {
           if (!wrap || !wrap.isConnected) return; // the person has navigated away
           S.users = list;
-          wrap.innerHTML = usersTable(list);
-          countEl.textContent = list.length + ' ' + (list.length === 1 ? 'person' : 'people');
-          bindRowLinks(wrap);
+          render();
         }).catch(function (e) { toast(e.message, 'err'); });
       }, 200);
-      $('#u-q', main).addEventListener('input', function (e) { usersFilter.q = e.target.value; refresh(); });
-      $('#u-group', main).addEventListener('change', function (e) { usersFilter.group = e.target.value; refresh(); });
-      $('#u-role', main).addEventListener('change', function (e) { usersFilter.role = e.target.value; refresh(); });
+      $('#u-q', main).addEventListener('input', function (e) { usersFilter.q = e.target.value; reload(); });
+      $('#u-group', main).addEventListener('change', function (e) { usersFilter.group = e.target.value; usersFilter._touched = true; reload(); });
+      $('#u-role', main).addEventListener('change', function (e) { usersFilter.role = e.target.value; reload(); });
+      $('#u-stage', main).addEventListener('change', function (e) { usersFilter.stage = e.target.value; render(); });
+      $('#u-band', main).addEventListener('change', function (e) { usersFilter.band = e.target.value; render(); });
+      $('#u-sort', main).addEventListener('change', function (e) { usersFilter.sort = e.target.value; render(); });
       if ($('#u-add', main)) $('#u-add', main).addEventListener('click', function () { openUserForm(null); });
       if ($('#u-import', main)) $('#u-import', main).addEventListener('click', openImport);
     });
   }
   function usersTable(users) {
-    if (!users.length) return '<div class="empty"><strong>No people match.</strong>' + (can('admin') ? 'Add someone or import a CSV to get started.' : 'Try a different group or search.') + '</div>';
-    return '<table><thead><tr><th>Name</th><th>Group</th><th>Role</th><th>Progress</th><th>Access</th><th>Last sign-in</th></tr></thead><tbody>' +
+    if (!users.length) return '<div class="empty"><strong>No people match.</strong>' + (can('admin') ? 'Adjust the filters, add someone, or import a CSV.' : 'Try a different group, stage, or search.') + '</div>';
+    var total = (S.courses || []).length || S.courseCount;
+    return '<table><thead><tr><th>Name</th><th>Group</th><th>Role</th><th>Stage</th><th>Progress</th><th>Access</th><th>Last sign-in</th></tr></thead><tbody>' +
       users.map(function (u) {
         return '<tr class="click" data-href="#/users/' + u.id + '">' +
           '<td><div class="row"><span class="avatar">' + esc(initials(u.name)) + '</span><div><div><strong>' + esc(u.name) + '</strong></div><div class="sub">' + esc(u.email) + (u.phone ? ' · ' + esc(u.phone) : '') + '</div></div></div></td>' +
           '<td>' + (u.group_name ? esc(u.group_name) : '<span class="muted">—</span>') + '</td>' +
           '<td>' + roleBadge(u.role) + '</td>' +
-          '<td>' + progressBar(u.completed_count || 0, S.courseCount) + '</td>' +
+          '<td>' + stageBadge(stageOf(u.completed_ids)) + '</td>' +
+          '<td>' + progressBar(u.completed_count || 0, total) + '</td>' +
           '<td>' + accessBadge(u) + '</td>' +
           '<td class="muted small nowrap">' + (u.last_login_at ? esc(fmtDate(u.last_login_at, true)) : 'Never') + '</td>' +
         '</tr>';
@@ -436,6 +502,9 @@
     { k: 'password', l: 'Password', a: ['password', 'pass', 'pwd', 'temporary password'] },
     { k: 'completed', l: 'Completed courses', a: ['completed', 'completed courses', 'courses', 'passed', 'completions'] },
     { k: 'name', l: 'Full name (split)', a: ['name', 'full name', 'fullname'] },
+    { k: 'password_hash', l: 'Password hash (old site)', a: ['password_hash', 'password hash', 'user_pass', 'hash'] },
+    { k: 'created_at', l: 'Registered date', a: ['created_at', 'registered', 'user_registered', 'created', 'joined', 'date registered'] },
+    { k: 'last_login', l: 'Last sign-in', a: ['last_login', 'last login', 'last_login_at', 'last sign-in', 'last signin'] },
   ];
   function parseCSV(text) {
     var rows = [], row = [], cell = '', i = 0, q = false;
@@ -521,7 +590,7 @@
         headers.map(function (h, i) { return '<th><div class="small muted" style="text-transform:none;letter-spacing:0">' + esc(h) + '</div><select class="input sm imp-sel" data-i="' + i + '">' + opts + '</select></th>'; }).join('') +
         '</tr></thead><tbody>' + rows.slice(0, 6).map(function (r) { return '<tr>' + headers.map(function (_, i) { return '<td class="small">' + esc(r[i] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
         (rows.length > 6 ? '<div class="hint">Showing the first 6 of ' + rows.length + ' rows.</div>' : '') +
-        '<div class="hint">Role accepts student, trainer, admin or superadmin (anything else becomes student). "Completed courses" accepts course ids or titles separated by | ; or , — those are recorded as passed.</div>' +
+        '<div class="hint">Role accepts student, trainer, admin or superadmin (anything else becomes student). "Completed courses" accepts course ids or titles separated by | ; or , — those are recorded as passed; add the date it was passed as <code>p1@2026-05-22</code>. "Password hash" carries a WordPress or bcrypt hash from a previous site so people keep their old password.</div>' +
         '<div class="notice err hidden mt" id="imp-err"></div>';
       $$('.imp-sel', box).forEach(function (s) { s.value = mapping[Number(s.getAttribute('data-i'))] || ''; s.addEventListener('change', function () { mapping[Number(s.getAttribute('data-i'))] = s.value; validate(); }); });
       validate();

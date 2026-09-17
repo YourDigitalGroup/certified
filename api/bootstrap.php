@@ -455,6 +455,69 @@ function valid_email(string $email): bool
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false && strlen($email) <= 254;
 }
 
+// ---------------------------------------------------------------------------
+// Password verification, including hashes brought over from the old WordPress
+// site. Successful logins are re-hashed with password_hash() by the caller.
+//   $wp$2y$…   WordPress 6.8+: bcrypt over base64(sha384(trim(password)))
+//   $2y$/$2a$  plain bcrypt (WordPress plugins, or our own hashes)
+//   $P$/$H$    phpass "portable" hashes (WordPress before 6.8)
+//   32 hex     ancient WordPress md5
+// ---------------------------------------------------------------------------
+function verify_password(string $password, string $hash): bool
+{
+    if ($hash === '') return false;
+    if (strpos($hash, '$wp$') === 0) {
+        $pre = base64_encode(hash('sha384', trim($password), true));
+        return password_verify($pre, substr($hash, 3));
+    }
+    if (strpos($hash, '$P$') === 0 || strpos($hash, '$H$') === 0) return phpass_verify($password, $hash);
+    if (preg_match('/^[0-9a-f]{32}$/', $hash)) return hash_equals($hash, md5($password));
+    return password_verify($password, $hash);
+}
+
+/** Is this a hash format we can verify later (used when importing accounts)? */
+function legacy_hash_ok(string $hash): bool
+{
+    return (bool)preg_match('/^(\$wp\$2[aby]\$\d\d\$.{53}|\$2[aby]\$\d\d\$.{53}|\$[PH]\$.{31}|\$argon2i?d?\$.+|[0-9a-f]{32})$/', $hash);
+}
+
+function phpass_verify(string $password, string $hash): bool
+{
+    $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    if (strlen($hash) !== 34) return false;
+    $log2 = strpos($itoa64, $hash[3]);
+    if ($log2 === false || $log2 < 7 || $log2 > 30) return false;
+    $count = 1 << $log2;
+    $salt = substr($hash, 4, 8);
+    $h = md5($salt . $password, true);
+    do { $h = md5($h . $password, true); } while (--$count);
+    $out = '';
+    $i = 0;
+    do {
+        $value = ord($h[$i++]);
+        $out .= $itoa64[$value & 0x3f];
+        if ($i < 16) $value |= ord($h[$i]) << 8;
+        $out .= $itoa64[($value >> 6) & 0x3f];
+        if ($i++ >= 16) break;
+        if ($i < 16) $value |= ord($h[$i]) << 16;
+        $out .= $itoa64[($value >> 12) & 0x3f];
+        if ($i++ >= 16) break;
+        $out .= $itoa64[($value >> 18) & 0x3f];
+    } while ($i < 16);
+    return hash_equals($hash, substr($hash, 0, 12) . $out);
+}
+
+/** Parse a date/time from an import file into our ISO form, or null when unusable. */
+function iso_or_null($value): ?string
+{
+    $s = trim((string)$value);
+    if ($s === '' || $s === '0000-00-00 00:00:00') return null;
+    if (ctype_digit($s) && strlen($s) >= 9) return gmdate('Y-m-d\TH:i:s\Z', (int)$s); // unix epoch
+    $t = strtotime($s);
+    if ($t === false || $t < 946684800) return null; // before 2000: treat as garbage
+    return gmdate('Y-m-d\TH:i:s\Z', $t);
+}
+
 /** Returns an error message, or null when the password is acceptable. */
 function password_problem(string $pw): ?string
 {

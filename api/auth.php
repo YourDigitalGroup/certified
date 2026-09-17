@@ -99,11 +99,12 @@ switch ($action) {
         if ($password === '') {
             respond(['status' => 'password_required', 'email' => $u['email']]);
         }
-        if (!password_verify($password, $u['password_hash'])) {
+        if (!verify_password($password, $u['password_hash'])) {
             rate_limit_record($email, $ip, false);
             fail('Invalid email or password.', 401, ['code' => 'bad_credentials']);
         }
         rate_limit_record($email, $ip, true);
+        // Hashes from the old site (and any outdated native ones) are upgraded on first successful login.
         if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
             db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([password_hash($password, PASSWORD_DEFAULT), $u['id']]);
         }
@@ -148,7 +149,7 @@ switch ($action) {
         $current = (string)($d['current_password'] ?? '');
         $new = (string)($d['new_password'] ?? '');
         if (!empty($u['password_hash'])) {
-            if ($current === '' || !password_verify($current, $u['password_hash'])) fail('Your current password is not correct.', 403, ['code' => 'bad_current']);
+            if ($current === '' || !verify_password($current, $u['password_hash'])) fail('Your current password is not correct.', 403, ['code' => 'bad_current']);
             if ($current === $new) fail('Choose a password different from your current one.');
         }
         $problem = password_problem($new);

@@ -63,7 +63,8 @@ switch ($action) {
         $qs = mb_strtolower(trim((string)q('q', '')));
         $group = trim((string)q('group', ''));
         $role = trim((string)q('role', ''));
-        $sql = 'SELECT u.*, (SELECT COUNT(*) FROM completions c WHERE c.user_id = u.id) AS completed_count FROM users u WHERE 1=1';
+        $sql = 'SELECT u.*, (SELECT COUNT(*) FROM completions c WHERE c.user_id = u.id) AS completed_count,
+                (SELECT group_concat(c.course_id) FROM completions c WHERE c.user_id = u.id) AS completed_ids FROM users u WHERE 1=1';
         $args = [];
         if ($qs !== '') {
             $sql .= " AND (LOWER(u.first_name || ' ' || u.last_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(u.group_name) LIKE ? OR u.phone LIKE ?)";
@@ -79,6 +80,7 @@ switch ($action) {
         foreach ($st->fetchAll() as $r) {
             $p = user_public($r);
             $p['completed_count'] = (int)$r['completed_count'];
+            $p['completed_ids'] = $r['completed_ids'] ? explode(',', $r['completed_ids']) : [];
             $users[] = $p;
         }
         $groups = db()->query("SELECT group_name, COUNT(*) AS n FROM users WHERE group_name <> '' GROUP BY group_name ORDER BY LOWER(group_name)")->fetchAll();
@@ -232,6 +234,12 @@ switch ($action) {
                 if ($role === 'administrator') $role = 'admin';
                 if (!in_array($role, ROLES, true)) $role = 'student';
                 $existing = fetch_user_by_email($email);
+                // Optional columns from a previous system: an existing password hash we can
+                // verify (see verify_password), the original registration date, last sign-in.
+                $legacyHash = trim((string)($row['password_hash'] ?? ''));
+                if ($legacyHash !== '' && !legacy_hash_ok($legacyHash)) { $errors[] = "Row $line: unrecognised password hash for $email (ignored)"; $legacyHash = ''; }
+                $createdAt = iso_or_null($row['created_at'] ?? '');
+                $lastLogin = iso_or_null($row['last_login'] ?? '');
                 if ($existing) {
                     if ($mode === 'skip') { $skipped++; continue; }
                     if (!can_manage($actor, $existing['role'])) { $errors[] = "Row $line: cannot modify {$existing['role']} $email"; continue; }
@@ -241,32 +249,43 @@ switch ($action) {
                     foreach (USER_FIELDS as $f) $merged[$f] = (array_key_exists($f, $row) && in_str($row, $f) !== '') ? $fields[$f] : $existing[$f];
                     $pdo->prepare('UPDATE users SET first_name = ?, last_name = ?, group_name = ?, phone = ?, address = ?, city = ?, state = ?, zip = ?, notes = ?, role = ?, updated_at = ? WHERE id = ?')
                         ->execute([$merged['first_name'], $merged['last_name'], $merged['group_name'], $merged['phone'], $merged['address'], $merged['city'], $merged['state'], $merged['zip'], $merged['notes'], $newRole, now(), $existing['id']]);
+                    // Only fill in a password / last sign-in the account does not have yet; never overwrite.
+                    if ($legacyHash !== '' && empty($existing['password_hash'])) $pdo->prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')->execute([$legacyHash, $existing['id']]);
+                    if ($lastLogin && empty($existing['last_login_at'])) $pdo->prepare('UPDATE users SET last_login_at = ? WHERE id = ?')->execute([$lastLogin, $existing['id']]);
                     $uid = (int)$existing['id'];
                     $updated++;
                 } else {
                     if (!in_array($role, $assignable, true)) $role = 'student';
                     $password = (string)($row['password'] ?? '');
                     $hash = null;
-                    if ($password !== '') {
+                    $requireChange = 0;
+                    if ($legacyHash !== '') {
+                        $hash = $legacyHash; // keeps working; upgraded to a native hash on first login
+                    } elseif ($password !== '') {
                         if (password_problem($password)) { $errors[] = "Row $line: password too short for $email (min " . MIN_PASSWORD_LENGTH . "), created without one"; }
-                        else $hash = password_hash($password, PASSWORD_DEFAULT);
+                        else { $hash = password_hash($password, PASSWORD_DEFAULT); $requireChange = 1; }
                     }
                     $ts = now();
-                    $pdo->prepare('INSERT INTO users (email, first_name, last_name, group_name, phone, address, city, state, zip, notes, role, password_hash, must_change_password, active, created_at, updated_at, created_by)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)')
+                    $pdo->prepare('INSERT INTO users (email, first_name, last_name, group_name, phone, address, city, state, zip, notes, role, password_hash, must_change_password, active, created_at, updated_at, last_login_at, created_by)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)')
                         ->execute([$email, $fields['first_name'], $fields['last_name'], $fields['group_name'], $fields['phone'], $fields['address'], $fields['city'], $fields['state'], $fields['zip'], $fields['notes'],
-                            $role, $hash, $hash ? 1 : 0, $ts, $ts, $actor['id']]);
+                            $role, $hash, $requireChange, $createdAt ?: $ts, $ts, $lastLogin, $actor['id']]);
                     $uid = (int)$pdo->lastInsertId();
                     $created++;
                 }
-                // Optional "completed" column: course ids or titles separated by | ; ,
+                // Optional "completed" column: course ids or titles separated by | ; , — each may carry
+                // the date it was passed as "id@2026-05-22" (or any date strtotime understands).
                 $completed = $row['completed'] ?? '';
                 $list = is_array($completed) ? $completed : preg_split('/[|;,]/', (string)$completed);
                 foreach ($list as $item) {
-                    $cid = resolve_course_id((string)$item);
-                    if ($cid === null) { if (trim((string)$item) !== '') $errors[] = "Row $line: unknown course \"" . trim((string)$item) . '"'; continue; }
+                    $item = trim((string)$item);
+                    if ($item === '') continue;
+                    $when = null;
+                    if (strpos($item, '@') !== false) { [$item, $whenRaw] = explode('@', $item, 2); $item = trim($item); $when = iso_or_null($whenRaw); }
+                    $cid = resolve_course_id($item);
+                    if ($cid === null) { $errors[] = "Row $line: unknown course \"" . $item . '"'; continue; }
                     $pdo->prepare("INSERT OR IGNORE INTO completions (user_id, course_id, score, total, passed_at, method, granted_by, note) VALUES (?, ?, NULL, NULL, ?, 'import', ?, '')")
-                        ->execute([$uid, $cid, now(), $actor['id']]);
+                        ->execute([$uid, $cid, $when ?: now(), $actor['id']]);
                     $completionsAdded += (int)$pdo->query('SELECT changes()')->fetchColumn();
                 }
             }

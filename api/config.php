@@ -41,6 +41,16 @@ define('SEED_SUPERADMIN_FIRST', 'Scott');
 define('SEED_SUPERADMIN_LAST', '');
 define('SEED_SUPERADMIN_GROUP', '44 Interactive');
 
+// Narration (text-to-speech). The portal asks api/tts.php for each narration clip; the
+// server generates it once with ElevenLabs, stores it in data/vo-cache, and serves that
+// copy to everyone afterwards. Leave the key empty to fall back to the browser voice.
+// (An environment variable PORTAL_TTS_KEY overrides this; set it empty to disable server narration.)
+define('ELEVENLABS_API_KEY', getenv('PORTAL_TTS_KEY') !== false ? (string)getenv('PORTAL_TTS_KEY') : 'sk_8cdcf1a3e5555b95f281da8ec477596f9e3934120095e3ce');
+define('ELEVENLABS_MODEL', 'eleven_turbo_v2_5');
+// Only these voice ids may be requested (the portal's narrator rotation + the "rep" voices).
+define('ELEVENLABS_VOICES', ['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'UgBBYS2sOqTuMpoF3BR0', 'nPczCjzI2devNBz1zQrb', 'cgSgspJ2msm6clMCkdW9']);
+define('VO_CACHE_DIR', DATA_DIR . '/vo-cache');
+
 // "Sign in as" (impersonation) is a super-admin feature. Leave this list non-empty to
 // restrict it to specific super admin accounts; an empty array allows every super admin.
 define('IMPERSONATE_ALLOWED_EMAILS', ['scott@44interactive.com']);

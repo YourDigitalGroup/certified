@@ -41,6 +41,7 @@ jobs:
             **/vo-scripts/**
             **/data/*.sqlite*
             **/data/tmp/**
+            **/data/vo-cache/**
             README.md
             ADMIN.md
             CLAUDE.md

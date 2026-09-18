@@ -464,7 +464,8 @@
         }).join('') + '</select><div class="hint" id="role-help">' + esc(ROLE_HELP[user ? user.role : 'student']) + '</div></div>' +
         (isNew ?
           '<div class="span2" style="border-top:1px solid var(--gray-100);padding-top:14px"><label class="f">Sign-in</label>' +
-            '<label class="check"><input type="radio" name="pwmode" value="none" checked> No password yet — they sign in with just their email and create a password the first time</label><br>' +
+            '<label class="check"><input type="radio" name="pwmode" value="none" checked> ' + (S.mailEnabled ? 'No password yet — they choose one through a link we email them' : 'No password yet — they sign in with just their email and create a password the first time') + '</label>' +
+            (S.mailEnabled ? '<div id="welcome-wrap" style="margin:8px 0 0 26px"><label class="check"><input type="checkbox" name="send_welcome" checked> Email them the set-your-password link now</label></div>' : '<br>') +
             '<label class="check" style="margin-top:8px"><input type="radio" name="pwmode" value="set"> Set a password now</label>' +
             '<div id="pw-fields" class="hidden" style="margin-top:10px"><input class="input" name="password" type="text" placeholder="Temporary password (at least 8 characters)" autocomplete="new-password">' +
             '<label class="check" style="margin-top:8px"><input type="checkbox" name="require_change" checked> Ask them to choose a new password at first sign-in</label></div>' +
@@ -475,7 +476,11 @@
       footer: '<button class="btn" data-close>Cancel</button><button class="btn primary" id="uf-save">' + (isNew ? 'Add person' : 'Save changes') + '</button>' });
     var form = $('.m-b', m.el);
     $('[name=role]', form).addEventListener('change', function (e) { $('#role-help', form).textContent = ROLE_HELP[e.target.value]; });
-    if (isNew) $$('[name=pwmode]', form).forEach(function (r) { r.addEventListener('change', function () { $('#pw-fields', form).classList.toggle('hidden', $('[name=pwmode]:checked', form).value !== 'set'); }); });
+    if (isNew) $$('[name=pwmode]', form).forEach(function (r) { r.addEventListener('change', function () {
+      var set = $('[name=pwmode]:checked', form).value === 'set';
+      $('#pw-fields', form).classList.toggle('hidden', !set);
+      if ($('#welcome-wrap', form)) $('#welcome-wrap', form).classList.toggle('hidden', set);
+    }); });
     $('#uf-save', m.el).addEventListener('click', function () {
       var data = {};
       ['first_name', 'last_name', 'email', 'group_name', 'phone', 'address', 'city', 'state', 'zip', 'notes', 'role'].forEach(function (k) { data[k] = $('[name=' + k + ']', form).value.trim(); });
@@ -485,12 +490,17 @@
           data.password = $('[name=password]', form).value;
           if (data.password.length < 8) return showErr('The password needs at least 8 characters.');
           data.require_change = $('[name=require_change]', form).checked;
+        } else if ($('[name=send_welcome]', form)) {
+          data.send_welcome = $('[name=send_welcome]', form).checked;
         }
       } else data.id = user.id;
       var btn = $('#uf-save', m.el); btn.disabled = true;
       api('users.php?action=' + (isNew ? 'create' : 'update'), data).then(function (d) {
         m.close();
-        toast(isNew ? d.user.name + ' added.' : 'Saved.', 'ok');
+        if (!isNew) toast('Saved.', 'ok');
+        else if (d.welcome_sent) toast(d.user.name + ' added and emailed a link to set their password.', 'ok');
+        else if (d.welcome_error) toast(d.user.name + ' added, but the email failed: ' + d.welcome_error, 'err');
+        else toast(d.user.name + ' added.', 'ok');
         if (isNew) location.hash = '#/users/' + d.user.id; else route();
       }).catch(function (e) { btn.disabled = false; showErr(e.message); });
     });
@@ -648,6 +658,7 @@
         '<div class="page-head"><div class="row" style="gap:16px"><span class="avatar lg">' + esc(initials(u.name)) + '</span><div><h1>' + esc(u.name) + '</h1><div class="row wrap" style="margin-top:6px">' + roleBadge(u.role) + accessBadge(u) + '<span class="muted small">' + esc(u.email) + (u.group_name ? ' · ' + esc(u.group_name) : '') + '</span></div></div></div>' +
         '<div class="row wrap">' +
           (S.canImpersonate && !isSelf && u.active ? '<button class="btn dark" id="p-impersonate" title="See the portal as this person">Sign in as ' + esc(u.first_name || u.name) + '</button>' : '') +
+          (S.mailEnabled && !isSelf && u.active ? '<button class="btn" id="p-sendlink" title="Email ' + attr(u.first_name || u.name) + ' a one-time link">' + (u.has_password ? 'Email a reset link' : 'Email a set-password link') + '</button>' : '') +
           (manageable ? '<button class="btn" id="p-edit">Edit details</button>' : '') + '</div></div>' +
         '<div class="grid-2-3">' +
           '<div class="stack">' +
@@ -678,6 +689,12 @@
       var main = setMain(html);
       if ($('#p-edit', main)) $('#p-edit', main).addEventListener('click', function () { openUserForm(u); });
       if ($('#p-impersonate', main)) $('#p-impersonate', main).addEventListener('click', function () { impersonate(u); });
+      if ($('#p-sendlink', main)) $('#p-sendlink', main).addEventListener('click', function () {
+        confirmDialog('Email a link', 'Send <strong>' + esc(u.name) + '</strong> (' + esc(u.email) + ') a link to ' + (u.has_password ? 'reset their password' : 'set their password') + '? It works once and expires after an hour.', 'Send email').then(function (yes) {
+          if (!yes) return;
+          api('users.php?action=send_reset', { id: u.id }).then(function (d) { toast('Link emailed to ' + d.to + '.', 'ok'); }).catch(function (e) { toast(e.message, 'err'); });
+        });
+      });
       bindAccessCard(main, u, isSelf);
 
       // Completion matrix
@@ -735,7 +752,9 @@
         '<div><label class="f">Password</label><div class="row wrap">' + accessBadge(u) +
           '<button class="btn sm" id="a-setpw">' + (u.has_password ? 'Set a new password' : 'Set a password') + '</button>' +
           (u.has_password && !isSelf ? '<button class="btn sm" id="a-clearpw">Remove password</button>' : '') +
-        '</div><div class="hint">' + (u.has_password ? 'Removing the password lets them sign in with just their email and create a new one.' : 'They will create a password the first time they sign in with their email.') + '</div></div>' +
+        '</div><div class="hint">' + (u.has_password
+          ? (S.mailEnabled ? 'Prefer “Email a reset link” above so they choose their own password. Removing the password means they set a new one through an emailed link.' : 'Removing the password lets them sign in with just their email and create a new one.')
+          : (S.mailEnabled ? 'They get a link by email to set a password the first time they sign in — or use “Email a set-password link” above to send one now.' : 'They will create a password the first time they sign in with their email.')) + '</div></div>' +
         (!isSelf ? '<div><label class="f">Account</label><div class="row wrap"><label class="check"><input type="checkbox" id="a-active"' + (u.active ? ' checked' : '') + '> Active (can sign in)</label><button class="btn danger sm" id="a-delete" style="margin-left:auto">Delete person</button></div></div>' : '') +
       '</div></div>';
   }
@@ -763,7 +782,7 @@
       });
     });
     if ($('#a-clearpw', main)) $('#a-clearpw', main).addEventListener('click', function () {
-      confirmDialog('Remove password', 'Remove the password for <strong>' + esc(u.name) + '</strong>? They will sign in with just their email next time and create a new password.', 'Remove password').then(function (yes) {
+      confirmDialog('Remove password', 'Remove the password for <strong>' + esc(u.name) + '</strong>? ' + (S.mailEnabled ? 'Next time they sign in they will be emailed a link to set a new one.' : 'They will sign in with just their email next time and create a new password.'), 'Remove password').then(function (yes) {
         if (yes) api('users.php?action=set_password', { id: u.id, clear: true }).then(function () { toast('Password removed.', 'ok'); route(); }).catch(function (e) { toast(e.message, 'err'); });
       });
     });
@@ -1204,7 +1223,8 @@
   // ---------------------------------------------------------------------------
   function viewSettings() {
     return Promise.all([api('settings.php?action=get'), api('auth.php?action=health')]).then(function (res) {
-      var s = res[0].settings, h = res[1];
+      var s = res[0].settings, m = res[0].mail || {}, h = res[1];
+      S.mailEnabled = !!m.configured;
       var main = setMain('<div class="page-head"><div><div class="eyebrow">Super admin</div><h1>Settings</h1><p class="lede">Site-wide options. Only super admins can change these.</p></div></div>' +
         '<div class="grid2">' +
           '<div class="card"><div class="card-head"><h2>Certification</h2></div>' +
@@ -1217,10 +1237,40 @@
             '<dt>data/ writable</dt><dd>' + (h.data_writable ? '<span class="badge ok">Yes</span>' : '<span class="badge danger">No</span>') + '</dd>' +
             '<dt>uploads/ writable</dt><dd>' + (h.uploads_writable ? '<span class="badge ok">Yes</span>' : '<span class="badge warn">No — video replacement will fail</span>') + '</dd>' +
             '<dt>Course manifest</dt><dd>' + (h.manifest ? '<span class="badge ok">Found</span>' : '<span class="badge danger">Missing</span>') + '</dd>' +
+            '<dt>curl (for email)</dt><dd>' + (h.curl ? '<span class="badge ok">Available</span>' : '<span class="badge warn">Missing — email cannot be sent</span>') + '</dd>' +
           '</dl><p class="hint mt">Roles: super admins are set per person under People → Access. Only super admins can grant or remove super admin.</p></div>' +
+          '<div class="card" style="grid-column:1/-1"><div class="card-head"><div><h2>Email (Mailgun)</h2><div class="muted small">Powers “Forgot your password?”, first sign-in links, welcome emails and the “Email a reset link” button.</div></div>' + (m.configured ? '<span class="badge ok">Configured</span>' : '<span class="badge warn">Not set up</span>') + '</div>' +
+            (m.driver === 'log' ? '<div class="notice info" style="margin-bottom:14px">Local test mode: messages are written to data/tmp/mail.log instead of being sent.</div>' : '') +
+            '<p class="hint" style="margin:0 0 14px">In Mailgun, add a sending domain (for example <strong>mg.44i.com</strong>), publish the DNS records it gives you, then copy the domain and a private API key (Mailgun → API Security) into the fields below.</p>' +
+            '<div class="fields">' +
+              '<div><label class="f">Sending domain</label><input class="input" id="m-domain" placeholder="mg.yourcompany.com" value="' + attr(m.domain || '') + '"></div>' +
+              '<div><label class="f">Region</label><select class="input" id="m-region"><option value="us"' + (m.region !== 'eu' ? ' selected' : '') + '>US (api.mailgun.net)</option><option value="eu"' + (m.region === 'eu' ? ' selected' : '') + '>EU (api.eu.mailgun.net)</option></select></div>' +
+              '<div class="span2"><label class="f">Private API key</label><input class="input" id="m-key" type="password" autocomplete="off" placeholder="' + (m.has_key ? 'Saved (' + attr(m.key_hint) + ') — paste a new key to replace it' : 'Paste the key from Mailgun → API Security') + '">' + (m.has_key ? '<label class="check" style="margin-top:8px"><input type="checkbox" id="m-clearkey"> Remove the saved key</label>' : '<div class="hint">Stored on the server and never shown again in full.</div>') + '</div>' +
+              '<div><label class="f">From name</label><input class="input" id="m-fromname" placeholder="' + attr(s.portal_title) + '" value="' + attr(m.from_name || '') + '"></div>' +
+              '<div><label class="f">From email</label><input class="input" id="m-from" type="email" placeholder="noreply@mg.yourcompany.com" value="' + attr(m.from_email || '') + '"><div class="hint">Use an address on the sending domain.</div></div>' +
+              '<div><label class="f">Reply-To <span class="muted">(optional)</span></label><input class="input" id="m-replyto" type="email" placeholder="support@yourcompany.com" value="' + attr(m.reply_to || '') + '"></div>' +
+              '<div><label class="f">Portal address used in links</label><input class="input" id="m-site" placeholder="' + attr(m.detected_site_url || '') + '" value="' + attr(m.site_url_saved ? m.site_url : '') + '"><div class="hint">' + (m.site_url_saved ? 'Saved. Clear it and save again to re-detect.' : 'Blank = detected from this page. Saving pins it.') + '</div></div>' +
+            '</div>' +
+            '<div class="notice err hidden mt" id="m-err"></div>' +
+            '<div class="row mt wrap" style="gap:12px"><button class="btn primary" id="m-save">Save email settings</button>' + (m.configured ? '<button class="btn" id="m-test">Send a test email to me</button>' : '') + '<span class="muted small">Links work once and expire after ' + (m.link_minutes || 60) + ' minutes.</span></div></div>' +
         '</div>');
       $('#s-save', main).addEventListener('click', function () {
         api('settings.php?action=save', { pass_threshold: Number($('#s-threshold', main).value), portal_title: $('#s-title', main).value }).then(function () { toast('Settings saved.', 'ok'); }).catch(function (e) { toast(e.message, 'err'); });
+      });
+      $('#m-save', main).addEventListener('click', function () {
+        var data = { mail_domain: $('#m-domain', main).value, mail_region: $('#m-region', main).value, mail_from_name: $('#m-fromname', main).value, mail_from_email: $('#m-from', main).value, mail_reply_to: $('#m-replyto', main).value, mail_site_url: $('#m-site', main).value };
+        var key = $('#m-key', main).value.trim();
+        if (key) data.mail_api_key = key;
+        if ($('#m-clearkey', main) && $('#m-clearkey', main).checked) data.mail_clear_key = true;
+        var err = $('#m-err', main); err.classList.add('hidden');
+        api('settings.php?action=save', data).then(function (d) { S.mailEnabled = !!(d.mail && d.mail.configured); toast('Email settings saved.', 'ok'); route(); })
+          .catch(function (e) { err.textContent = e.message; err.classList.remove('hidden'); });
+      });
+      if ($('#m-test', main)) $('#m-test', main).addEventListener('click', function () {
+        var btn = $('#m-test', main); btn.disabled = true; btn.textContent = 'Sending…';
+        api('settings.php?action=test_mail', {}).then(function (d) { toast('Test email sent to ' + d.to + '. Check your inbox (and spam folder).', 'ok'); })
+          .catch(function (e) { toast(e.message, 'err'); })
+          .then(function () { btn.disabled = false; btn.textContent = 'Send a test email to me'; });
       });
     });
   }
@@ -1249,7 +1299,7 @@
   // Boot
   // ---------------------------------------------------------------------------
   api('auth.php?action=me').then(function (d) {
-    S.me = d.user; S.csrf = d.csrf; S.impersonating = d.impersonating || null; S.canImpersonate = !!d.can_impersonate;
+    S.me = d.user; S.csrf = d.csrf; S.impersonating = d.impersonating || null; S.canImpersonate = !!d.can_impersonate; S.mailEnabled = !!d.mail_enabled;
     if (S.me.must_change_password && !S.impersonating) { location.replace('../login.html?mode=change&next=' + encodeURIComponent('admin/')); return; }
     if (!can('trainer')) { location.replace('../index.html'); return; }
     renderShell();

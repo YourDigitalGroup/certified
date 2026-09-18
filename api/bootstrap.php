@@ -235,6 +235,30 @@ function migrate(PDO $pdo): void
         }
         $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_version', '2')");
     }
+    if ($ver < 3) {
+        // One-time links for "forgot password" and first sign-in. Only the token's hash is kept.
+        $pdo->exec("CREATE TABLE IF NOT EXISTS password_resets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            token_hash TEXT NOT NULL UNIQUE,
+            purpose TEXT NOT NULL DEFAULT 'reset',
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL,
+            used_at INTEGER,
+            requested_ip TEXT NOT NULL DEFAULT '',
+            created_by INTEGER
+        )");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id)");
+        // Self-service link requests, for throttling (kept separately so unknown addresses count too).
+        $pdo->exec("CREATE TABLE IF NOT EXISTS reset_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            ip TEXT NOT NULL,
+            at INTEGER NOT NULL
+        )");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_reset_requests_at ON reset_requests(at)");
+        $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_version', '3')");
+    }
     seed_superadmin($pdo);
 }
 
@@ -432,6 +456,8 @@ function session_extras(): array
     return [
         'impersonating' => $imp ? ['by' => display_name($imp), 'by_id' => (int)$imp['id'], 'by_email' => $imp['email']] : null,
         'can_impersonate' => (bool)($u && !$imp && can_impersonate($u)),
+        // True once Mailgun is set up: enables "email a reset link" buttons and the welcome-email option.
+        'mail_enabled' => mail_configured(),
     ];
 }
 
@@ -646,6 +672,221 @@ function rate_limit_record(string $email, string $ip, bool $success): void
     if ($success) {
         db()->prepare('DELETE FROM login_attempts WHERE email = ? AND success = 0')->execute([$email]);
     }
+}
+
+// ---------------------------------------------------------------------------
+// Email (Mailgun) and one-time password links
+// Credentials live in the settings table (Admin → Settings → Email). Links carry a random
+// 256-bit token; only its SHA-256 is stored, each works once and expires after RESET_LINK_TTL.
+// ---------------------------------------------------------------------------
+function mail_settings(): array
+{
+    return [
+        'domain' => trim((string)setting_get('mail_domain', '')),
+        'region' => setting_get('mail_region', 'us') === 'eu' ? 'eu' : 'us',
+        'api_key' => (string)setting_get('mail_api_key', ''),
+        'from_name' => trim((string)setting_get('mail_from_name', '')),
+        'from_email' => trim((string)setting_get('mail_from_email', '')),
+        'reply_to' => trim((string)setting_get('mail_reply_to', '')),
+        'site_url' => trim((string)setting_get('mail_site_url', '')),
+    ];
+}
+
+/** True when email can go out: domain + From address, plus an API key unless the log driver is active. */
+function mail_configured(): bool
+{
+    $s = mail_settings();
+    if ($s['domain'] === '' || $s['from_email'] === '') return false;
+    return MAIL_DRIVER === 'log' || $s['api_key'] !== '';
+}
+
+/** What the super admin sees on the Settings page. The key itself is never returned, only its last four characters. */
+function mail_admin_view(): array
+{
+    $s = mail_settings();
+    return [
+        'configured' => mail_configured(),
+        'driver' => MAIL_DRIVER,
+        'domain' => $s['domain'],
+        'region' => $s['region'],
+        'from_name' => $s['from_name'],
+        'from_email' => $s['from_email'],
+        'reply_to' => $s['reply_to'],
+        'site_url' => $s['site_url'] !== '' ? $s['site_url'] : detected_site_url(),
+        'site_url_saved' => $s['site_url'] !== '',
+        'detected_site_url' => detected_site_url(),
+        'has_key' => $s['api_key'] !== '',
+        'key_hint' => $s['api_key'] !== '' ? '••••' . substr($s['api_key'], -4) : '',
+        'link_minutes' => (int)round(RESET_LINK_TTL / 60),
+        'curl' => function_exists('curl_init'),
+    ];
+}
+
+/** The portal folder's public URL as seen from this request (scheme, host, folder above api/), with a trailing slash. */
+function detected_site_url(): string
+{
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+    if (!preg_match('/^[A-Za-z0-9.\-]+(:\d{1,5})?$/', $host)) $host = 'localhost';
+    $dir = str_replace('\\', '/', dirname(dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/api/x.php'))));
+    if ($dir === '.' || $dir === '') $dir = '/';
+    return ($https ? 'https' : 'http') . '://' . $host . rtrim($dir, '/') . '/';
+}
+
+/** Base URL used inside emails. A configured address always wins over what the request suggests. */
+function site_url(): string
+{
+    if (PORTAL_BASE_URL !== '') return rtrim(PORTAL_BASE_URL, '/') . '/';
+    $s = mail_settings();
+    if ($s['site_url'] !== '') return rtrim($s['site_url'], '/') . '/';
+    return detected_site_url();
+}
+
+function mail_addr(string $name, string $email): string
+{
+    $name = trim((string)preg_replace('/[\r\n"<>]+/', ' ', $name));
+    return $name !== '' ? $name . ' <' . $email . '>' : $email;
+}
+
+/**
+ * Send one email through Mailgun (or append it to MAIL_LOG_FILE with the log driver).
+ * Returns ['ok' => bool, 'id' => string, 'error' => string].
+ */
+function mail_send(string $toEmail, string $toName, string $subject, string $text, string $html): array
+{
+    $s = mail_settings();
+    if (!mail_configured()) return ['ok' => false, 'id' => '', 'error' => 'Email is not set up yet. A super admin can add the Mailgun details under Settings → Email.'];
+    $fromName = $s['from_name'] !== '' ? $s['from_name'] : (string)setting_get('portal_title', 'Digital Certification');
+    $fields = [
+        'from' => mail_addr($fromName, $s['from_email']),
+        'to' => mail_addr($toName, $toEmail),
+        'subject' => $subject,
+        'text' => $text,
+        'html' => $html,
+    ];
+    if ($s['reply_to'] !== '') $fields['h:Reply-To'] = $s['reply_to'];
+    if (MAIL_DRIVER === 'log') {
+        ensure_dir(dirname(MAIL_LOG_FILE));
+        file_put_contents(MAIL_LOG_FILE, json_encode(array_merge(['at' => now()], $fields), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+        return ['ok' => true, 'id' => 'log', 'error' => ''];
+    }
+    if (!function_exists('curl_init')) return ['ok' => false, 'id' => '', 'error' => 'The PHP curl extension is missing on this host, so email cannot be sent.'];
+    $base = $s['region'] === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net';
+    $ch = curl_init($base . '/v3/' . $s['domain'] . '/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query($fields),
+        CURLOPT_USERPWD => 'api:' . $s['api_key'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 25,
+    ]);
+    $body = curl_exec($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+    if ($body === false) return ['ok' => false, 'id' => '', 'error' => 'Could not reach Mailgun: ' . $curlErr];
+    $j = json_decode((string)$body, true);
+    if ($status >= 200 && $status < 300) return ['ok' => true, 'id' => is_array($j) ? (string)($j['id'] ?? '') : '', 'error' => ''];
+    $msg = is_array($j) && !empty($j['message']) ? (string)$j['message'] : trim((string)$body);
+    if ($status === 401) $msg = 'Mailgun rejected the API key (401). Check the key, and that the region (US/EU) matches your Mailgun account.';
+    elseif ($status === 404) $msg = 'Mailgun does not recognise that sending domain (404). Check the spelling and the region.';
+    return ['ok' => false, 'id' => '', 'error' => 'Mailgun error ' . $status . ': ' . mb_substr($msg, 0, 300)];
+}
+
+/** Subject, plain text and HTML for a first-sign-in ('welcome') or password-reset ('reset') link. */
+function password_link_message(string $purpose, array $user, string $link): array
+{
+    $title = (string)setting_get('portal_title', 'Digital Certification');
+    $first = trim((string)($user['first_name'] ?? ''));
+    $hi = $first !== '' ? 'Hi ' . $first . ',' : 'Hello,';
+    $mins = (int)round(RESET_LINK_TTL / 60);
+    $ttl = $mins >= 120 ? round($mins / 60) . ' hours' : ($mins === 60 ? 'one hour' : $mins . ' minutes');
+    if ($purpose === 'welcome') {
+        $subject = 'Set your password for ' . $title;
+        $intro = 'Your ' . $title . ' account is ready. Use the button below to choose a password; after that you sign in any time with your email address (' . $user['email'] . ').';
+        $button = 'Set my password';
+        $ignore = 'If you were not expecting this email, you can ignore it.';
+    } else {
+        $subject = 'Reset your ' . $title . ' password';
+        $intro = 'Someone asked to reset the password for the ' . $title . ' account ' . $user['email'] . '. If that was you, use the button below to choose a new one.';
+        $button = 'Choose a new password';
+        $ignore = 'If you did not ask for this, ignore this email — your password will not change.';
+    }
+    $valid = 'This link works once and expires in ' . $ttl . '.';
+    $text = $hi . "\n\n" . $intro . "\n\n" . $link . "\n\n" . $valid . ' ' . $ignore . "\n\n— " . $title;
+    $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+    $html = '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif;color:#2b4863">'
+        . '<div style="max-width:520px;margin:32px auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:32px 36px">'
+        . '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2f6fa8;margin-bottom:12px">' . $e($title) . '</div>'
+        . '<p style="font-size:16px;line-height:1.5;margin:0 0 14px">' . $e($hi) . '</p>'
+        . '<p style="font-size:15px;line-height:1.55;margin:0 0 22px">' . $e($intro) . '</p>'
+        . '<p style="margin:0 0 22px"><a href="' . $e($link) . '" style="display:inline-block;background:#6fb56a;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:9999px">' . $e($button) . '</a></p>'
+        . '<p style="font-size:13px;line-height:1.5;color:#4a525c;margin:0 0 10px">' . $e($valid) . ' ' . $e($ignore) . '</p>'
+        . '<p style="font-size:12px;line-height:1.5;color:#6b7480;margin:0;word-break:break-all">If the button does not work, copy this address into your browser:<br><a href="' . $e($link) . '" style="color:#2f6fa8">' . $e($link) . '</a></p>'
+        . '</div></body></html>';
+    return ['subject' => $subject, 'text' => $text, 'html' => $html];
+}
+
+/** Create a fresh one-time token for $user (any older ones are dropped) and return the raw token. */
+function reset_token_issue(array $user, string $purpose, string $ip, ?int $byUserId): string
+{
+    $pdo = db();
+    $pdo->prepare('DELETE FROM password_resets WHERE user_id = ? OR expires_at < ?')->execute([$user['id'], time() - 86400]);
+    $token = random_token(32);
+    $pdo->prepare('INSERT INTO password_resets (user_id, token_hash, purpose, created_at, expires_at, requested_ip, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$user['id'], hash('sha256', $token), $purpose, time(), time() + RESET_LINK_TTL, $ip, $byUserId]);
+    return $token;
+}
+
+/** The token's row joined with the person, if it is unused, unexpired and the account is active. */
+function reset_token_lookup(string $token): ?array
+{
+    if (!preg_match('/^[0-9a-f]{64}$/', $token)) return null;
+    $st = db()->prepare('SELECT r.*, u.email, u.first_name, u.last_name, u.active, u.password_hash FROM password_resets r JOIN users u ON u.id = r.user_id WHERE r.token_hash = ?');
+    $st->execute([hash('sha256', $token)]);
+    $r = $st->fetch();
+    if (!$r || $r['used_at'] !== null || (int)$r['expires_at'] < time() || (int)$r['active'] !== 1) return null;
+    return $r;
+}
+
+function reset_link(string $token): string
+{
+    return site_url() . 'login.html?mode=reset&token=' . $token;
+}
+
+/** Throttle self-service link requests per address and per connection, and record this one. */
+function reset_rate_check(string $email, string $ip): void
+{
+    $pdo = db();
+    $since = time() - RESET_LINK_TTL;
+    $pdo->prepare('DELETE FROM reset_requests WHERE at < ?')->execute([time() - 86400]);
+    $st = $pdo->prepare('SELECT COUNT(*) FROM reset_requests WHERE at >= ? AND email = ?');
+    $st->execute([$since, $email]);
+    if ((int)$st->fetchColumn() >= RESET_MAX_PER_EMAIL) {
+        fail('We already sent a link to that address recently. Check your inbox and spam folder, or try again in an hour.', 429, ['code' => 'rate_limited']);
+    }
+    $st = $pdo->prepare('SELECT COUNT(*) FROM reset_requests WHERE at >= ? AND ip = ?');
+    $st->execute([$since, $ip]);
+    if ((int)$st->fetchColumn() >= RESET_MAX_PER_IP) {
+        fail('Too many reset requests from this connection. Please wait a while and try again.', 429, ['code' => 'rate_limited']);
+    }
+    $pdo->prepare('INSERT INTO reset_requests (email, ip, at) VALUES (?, ?, ?)')->execute([$email, $ip, time()]);
+}
+
+/**
+ * Email $user a one-time link to set ('welcome') or reset ('reset') their password.
+ * Returns mail_send()'s result; the token is discarded again when sending fails.
+ */
+function send_password_link(array $user, string $purpose, string $ip, ?int $byUserId = null): array
+{
+    if (!mail_configured()) return ['ok' => false, 'id' => '', 'error' => 'Email is not set up yet (Settings → Email).'];
+    $token = reset_token_issue($user, $purpose, $ip, $byUserId);
+    $m = password_link_message($purpose, $user, reset_link($token));
+    $r = mail_send((string)$user['email'], display_name($user), $m['subject'], $m['text'], $m['html']);
+    audit($byUserId, $purpose === 'welcome' ? 'auth.welcome_link' : 'auth.reset_link', (string)$user['email'], ['sent' => $r['ok'], 'error' => $r['ok'] ? null : $r['error'], 'ip' => $ip]);
+    if (!$r['ok']) db()->prepare('DELETE FROM password_resets WHERE token_hash = ?')->execute([hash('sha256', $token)]);
+    return $r;
 }
 
 // ---------------------------------------------------------------------------

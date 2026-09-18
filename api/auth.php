@@ -8,6 +8,9 @@
 //   POST ?action=login                  {email, password?}
 //   POST ?action=set_initial_password   {email, password}   (account has no password yet)
 //   POST ?action=change_password        {current_password?, new_password}
+//   POST ?action=request_reset          {email}            email a one-time link (forgot password / first sign-in)
+//   GET  ?action=reset_info&token=      → who the link is for, or 410 when expired/used
+//   POST ?action=reset_password         {token, password}  set the password and sign in
 //   POST ?action=logout
 
 declare(strict_types=1);
@@ -20,7 +23,8 @@ switch ($action) {
         $dataWritable = is_dir(DATA_DIR) ? is_writable(DATA_DIR) : is_writable(dirname(DATA_DIR));
         $uploadsWritable = is_dir(UPLOADS_DIR) ? is_writable(UPLOADS_DIR) : is_writable(dirname(UPLOADS_DIR));
         $ok = true;
-        try { db(); } catch (Throwable $e) { $ok = false; }
+        $mail = false;
+        try { db(); $mail = mail_configured(); } catch (Throwable $e) { $ok = false; }
         respond([
             'ok' => $ok && $dataWritable,
             'php' => PHP_VERSION,
@@ -29,6 +33,9 @@ switch ($action) {
             'data_writable' => $dataWritable,
             'uploads_writable' => $uploadsWritable,
             'manifest' => is_file(MANIFEST_FILE),
+            // The sign-in page shows "Forgot your password?" only when email can actually go out.
+            'mail' => $mail,
+            'curl' => function_exists('curl_init'),
         ]);
 
     case 'me':
@@ -93,7 +100,14 @@ switch ($action) {
         }
 
         if (empty($u['password_hash'])) {
-            // Account was created without a password: the person creates one now.
+            if (mail_configured()) {
+                // Prove they own the inbox: email a one-time link to set the password.
+                reset_rate_check($email, $ip);
+                $r = send_password_link($u, 'welcome', $ip, null);
+                if (!$r['ok']) fail('We could not send the email to set your password. Please ask your trainer or administrator.', 502, ['code' => 'mail_failed']);
+                respond(['status' => 'link_sent', 'email' => $u['email'], 'minutes' => (int)round(RESET_LINK_TTL / 60)]);
+            }
+            // No email set up: the person creates a password on the spot.
             respond(['status' => 'set_password', 'email' => $u['email'], 'name' => display_name($u)]);
         }
         if ($password === '') {
@@ -131,6 +145,10 @@ switch ($action) {
             rate_limit_record($email, $ip, false);
             fail('This account already has a password. Sign in with it instead.', 409, ['code' => 'has_password']);
         }
+        if (mail_configured()) {
+            // With email available the account may only be claimed through the link sent to that inbox.
+            fail('For security, set your password through the link we emailed you. Enter your email on the sign-in page to get a new one.', 409, ['code' => 'link_required']);
+        }
         $problem = password_problem($password);
         if ($problem) fail($problem);
         db()->prepare('UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = ?, last_login_at = ? WHERE id = ?')
@@ -139,6 +157,47 @@ switch ($action) {
         $u = fetch_user((int)$u['id']);
         $csrf = login_session($u);
         audit((int)$u['id'], 'auth.set_initial_password', $u['email']);
+        respond(['status' => 'ok', 'user' => user_public($u), 'csrf' => $csrf]);
+
+    case 'request_reset':
+        // "Forgot your password?" — also covers people who never set one. The answer is the same
+        // whether or not the address has an account, so nobody can probe the directory.
+        require_post();
+        $d = input();
+        $email = normalize_email(in_str($d, 'email'));
+        if ($email === '' || !valid_email($email)) fail('Enter a valid email address.');
+        if (!mail_configured()) fail('Password reset by email is not set up yet. Ask your trainer or administrator to reset your password.', 503, ['code' => 'mail_unavailable']);
+        $ip = client_ip();
+        reset_rate_check($email, $ip);
+        $u = fetch_user_by_email($email);
+        if ($u && (int)$u['active'] === 1) {
+            $r = send_password_link($u, empty($u['password_hash']) ? 'welcome' : 'reset', $ip, null);
+            if (!$r['ok']) fail('We could not send the email right now. Please try again later or ask your administrator.', 502, ['code' => 'mail_failed']);
+        }
+        respond(['status' => 'sent', 'email' => $email, 'minutes' => (int)round(RESET_LINK_TTL / 60)]);
+
+    case 'reset_info':
+        $r = reset_token_lookup((string)q('token', ''));
+        if (!$r) fail('This link has expired or was already used. Request a new one from the sign-in page.', 410, ['code' => 'bad_token']);
+        respond(['status' => 'ok', 'email' => $r['email'], 'name' => display_name($r), 'purpose' => $r['purpose'], 'has_password' => !empty($r['password_hash'])]);
+
+    case 'reset_password':
+        require_post();
+        $d = input();
+        $r = reset_token_lookup(in_str($d, 'token'));
+        if (!$r) fail('This link has expired or was already used. Request a new one from the sign-in page.', 410, ['code' => 'bad_token']);
+        $password = (string)($d['password'] ?? '');
+        $problem = password_problem($password);
+        if ($problem) fail($problem);
+        $pdo = db();
+        $pdo->prepare('UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = ?, last_login_at = ? WHERE id = ?')
+            ->execute([password_hash($password, PASSWORD_DEFAULT), now(), now(), $r['user_id']]);
+        $pdo->prepare('UPDATE password_resets SET used_at = ? WHERE id = ?')->execute([time(), $r['id']]);
+        $pdo->prepare('DELETE FROM password_resets WHERE user_id = ? AND id <> ?')->execute([$r['user_id'], $r['id']]);
+        $u = fetch_user((int)$r['user_id']);
+        rate_limit_record($u['email'], client_ip(), true);
+        $csrf = login_session($u);
+        audit((int)$u['id'], $r['purpose'] === 'welcome' ? 'auth.set_password_by_link' : 'auth.reset_password', $u['email']);
         respond(['status' => 'ok', 'user' => user_public($u), 'csrf' => $csrf]);
 
     case 'change_password':

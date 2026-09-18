@@ -50,6 +50,8 @@ switch ($action) {
             'progress' => (object)progress_for((int)$u['id']),
             'overrides' => overrides(),
             'settings' => public_settings(),
+            // course id → per-section video list (from the manifest), so the portal can warm up the next section's video.
+            'step_videos' => (object)array_filter(array_map(fn($c) => $c['stepVideos'] ?? null, course_map())),
         ], session_extras()));
 
     case 'impersonate':

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T04:27:16.686Z",
+  "generatedAt": "2026-09-18T19:56:54.568Z",
   "source": "index.html",
   "sections": [
     "Our Process",
@@ -376,6 +376,21 @@
           "src": "uploads/Launch4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/Launch3.mp4"
+        ],
+        [
+          "uploads/Launch2.mp4"
+        ],
+        [
+          "uploads/Launch1.mp4"
+        ],
+        [],
+        [
+          "uploads/Launch4.mp4"
+        ]
+      ],
       "steps": [
         "Where this fits",
         "Why this step exists",
@@ -534,6 +549,24 @@
           "src": "uploads/Ready5-10eb2f08.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/Ready1-ee5b5398.mp4"
+        ],
+        [
+          "uploads/Ready2-94e82818.mp4"
+        ],
+        [
+          "uploads/Ready3-4bad20c7.mp4"
+        ],
+        [],
+        [
+          "uploads/Ready5.mp4"
+        ],
+        [
+          "uploads/Ready5-10eb2f08.mp4"
+        ]
+      ],
       "steps": [
         "Where This Fits",
         "Why This Step Exists",
@@ -685,6 +718,20 @@
         {
           "src": "uploads/trello3.mp4"
         }
+      ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/trello2.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/trello-2.mp4"
+        ],
+        [
+          "uploads/trello3.mp4"
+        ]
       ],
       "steps": [
         "Where This Fits",
@@ -840,6 +887,22 @@
         {
           "src": "uploads/resource4.mp4"
         }
+      ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/resource1.mp4"
+        ],
+        [],
+        [
+          "uploads/resource2.mp4"
+        ],
+        [
+          "uploads/resource3.mp4"
+        ],
+        [
+          "uploads/resource4.mp4"
+        ]
       ],
       "steps": [
         "Where This Fits",
@@ -999,6 +1062,24 @@
           "src": "uploads/cna-5.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/cna-1.mp4"
+        ],
+        [
+          "uploads/cna-2.mp4"
+        ],
+        [],
+        [
+          "uploads/cna-3.mp4"
+        ],
+        [
+          "uploads/cna-4.mp4"
+        ],
+        [
+          "uploads/cna-5.mp4"
+        ]
+      ],
       "steps": [
         "Where This Fits",
         "Why This Step Exists",
@@ -1156,6 +1237,24 @@
         {
           "src": "uploads/rfr6.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/Launch3.mp4"
+        ],
+        [
+          "uploads/rfr-2.mp4"
+        ],
+        [],
+        [
+          "uploads/trello2.mp4"
+        ],
+        [
+          "uploads/rfr-4.mp4"
+        ],
+        [
+          "uploads/rfr6.mp4"
+        ]
       ],
       "steps": [
         "Where This Fits",
@@ -1315,6 +1414,24 @@
           "src": "uploads/audit5.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/audit1.mp4"
+        ],
+        [
+          "uploads/audit2.mp4"
+        ],
+        [],
+        [
+          "uploads/audit-3.mp4"
+        ],
+        [
+          "uploads/audit-4.mp4"
+        ],
+        [
+          "uploads/audit5.mp4"
+        ]
+      ],
       "steps": [
         "Where This Fits",
         "Why This Step Exists",
@@ -1470,6 +1587,22 @@
           "src": "uploads/IO-6.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/IO-1.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/IO-4.mp4"
+        ],
+        [
+          "uploads/IO-5.mp4"
+        ],
+        [
+          "uploads/IO-6.mp4"
+        ]
+      ],
       "steps": [
         "Where This Fits",
         "Why This Step Exists",
@@ -1624,6 +1757,22 @@
         {
           "src": "uploads/intake4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/intake1.mp4"
+        ],
+        [
+          "uploads/intake2.mp4"
+        ],
+        [],
+        [
+          "uploads/intake3.mp4"
+        ],
+        [
+          "uploads/intake4.mp4"
+        ],
+        []
       ],
       "steps": [
         "Where This Fits",
@@ -1783,6 +1932,24 @@
           "src": "uploads/reports5.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/reports1.mp4"
+        ],
+        [
+          "uploads/reports2.mp4"
+        ],
+        [],
+        [
+          "uploads/reports3.mp4"
+        ],
+        [
+          "uploads/reports4.mp4"
+        ],
+        [
+          "uploads/reports5.mp4"
+        ]
+      ],
       "steps": [
         "Where This Fits",
         "Why This Step Exists",
@@ -1935,6 +2102,19 @@
           "src": "uploads/house-03.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/house-01.mp4"
+        ],
+        [
+          "uploads/house-02.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/house-03.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -2083,6 +2263,17 @@
         {
           "src": "uploads/GBP-05-0e3be3d8.mp4"
         }
+      ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/gmb-02.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/GBP-05-0e3be3d8.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -2236,6 +2427,19 @@
           "src": "uploads/fourge-03.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/fourge-01.mp4"
+        ],
+        [
+          "uploads/fourge-02-8ca9d294.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/fourge-03.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -2387,6 +2591,19 @@
         {
           "src": "uploads/web-03.mp4"
         }
+      ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/web-01.mp4"
+        ],
+        [],
+        [
+          "uploads/web-02.mp4"
+        ],
+        [
+          "uploads/web-03.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -2543,6 +2760,21 @@
           "src": "uploads/chat-04.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/chat-01.mp4"
+        ],
+        [
+          "uploads/chat-02.mp4"
+        ],
+        [],
+        [
+          "uploads/chat-03.mp4"
+        ],
+        [
+          "uploads/chat-04.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -2698,6 +2930,22 @@
           "src": "uploads/ada-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/ada-1.mp4"
+        ],
+        [
+          "uploads/ada-2.mp4"
+        ],
+        [],
+        [
+          "uploads/ada-3.mp4"
+        ],
+        [],
+        [
+          "uploads/ada-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -2850,6 +3098,20 @@
           "src": "uploads/seo-3.mp4"
         }
       ],
+      "stepVideos": [
+        [],
+        [],
+        [],
+        [
+          "uploads/seo-1.mp4"
+        ],
+        [
+          "uploads/seo-2.mp4"
+        ],
+        [
+          "uploads/seo-3.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -3001,6 +3263,19 @@
         {
           "src": "uploads/tlp-04.mp4"
         }
+      ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/tlp-02.mp4"
+        ],
+        [],
+        [
+          "uploads/tlp-03.mp4"
+        ],
+        [
+          "uploads/tlp-04.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -3156,6 +3431,22 @@
         {
           "src": "uploads/email-4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/email-1.mp4"
+        ],
+        [
+          "uploads/email-2.mp4"
+        ],
+        [],
+        [
+          "uploads/emal-3.mp4"
+        ],
+        [],
+        [
+          "uploads/email-4.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -3315,6 +3606,24 @@
           "src": "uploads/social-5.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/social-2.mp4"
+        ],
+        [
+          "uploads/social-1.mp4"
+        ],
+        [],
+        [
+          "uploads/social-3.mp4"
+        ],
+        [
+          "uploads/social-4.mp4"
+        ],
+        [
+          "uploads/social-5.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -3472,6 +3781,24 @@
         {
           "src": "uploads/radio-tv-4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/radio-1.mp4"
+        ],
+        [
+          "uploads/radio-2.mp4"
+        ],
+        [],
+        [
+          "uploads/radio-3.mp4"
+        ],
+        [
+          "uploads/radio-4.mp4"
+        ],
+        [
+          "uploads/radio-tv-4.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -3632,6 +3959,24 @@
           "src": "uploads/llo-5.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/LLO-1.mp4"
+        ],
+        [
+          "uploads/llo-2.mp4"
+        ],
+        [],
+        [
+          "uploads/llo-3.mp4"
+        ],
+        [
+          "uploads/llo-4.mp4"
+        ],
+        [
+          "uploads/llo-5.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -3787,6 +4132,21 @@
           "src": "uploads/rm-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/rm-1.mp4"
+        ],
+        [
+          "uploads/rm-2.mp4"
+        ],
+        [],
+        [
+          "uploads/rm-3.mp4"
+        ],
+        [
+          "uploads/rm-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -3938,6 +4298,19 @@
         {
           "src": "uploads/sem-3.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/SEM-1.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/SEM-2.mp4"
+        ],
+        [
+          "uploads/sem-3.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -4096,6 +4469,22 @@
           "src": "uploads/td-4.mp4"
         }
       ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/td-1.mp4"
+        ],
+        [],
+        [
+          "uploads/td-2.mp4"
+        ],
+        [
+          "uploads/td-3.mp4"
+        ],
+        [
+          "uploads/td-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -4251,6 +4640,22 @@
         {
           "src": "uploads/dd-4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/dd-1.mp4"
+        ],
+        [
+          "uploads/dd-2.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/dd-3.mp4"
+        ],
+        [
+          "uploads/dd-4.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -4411,6 +4816,24 @@
           "src": "uploads/geo-6.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/geo-1.mp4"
+        ],
+        [
+          "uploads/geo-2.mp4"
+        ],
+        [],
+        [
+          "uploads/geo-3.mp4"
+        ],
+        [
+          "uploads/geo-4.mp4"
+        ],
+        [
+          "uploads/geo-6.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -4566,6 +4989,21 @@
         {
           "src": "uploads/event-4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/event-1.mp4"
+        ],
+        [
+          "uploads/event-2.mp4"
+        ],
+        [],
+        [
+          "uploads/event-3.mp4"
+        ],
+        [
+          "uploads/event-4.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -4723,6 +5161,21 @@
           "src": "uploads/crm-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/crm-1.mp4"
+        ],
+        [
+          "uploads/crm-2.mp4"
+        ],
+        [],
+        [
+          "uploads/crm-3.mp4"
+        ],
+        [
+          "uploads/crm-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -4879,6 +5332,21 @@
           "src": "uploads/add-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/add-1.mp4"
+        ],
+        [
+          "uploads/add-2.mp4"
+        ],
+        [],
+        [
+          "uploads/add-3.mp4"
+        ],
+        [
+          "uploads/add-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -5032,6 +5500,19 @@
           "src": "uploads/smads-3.mp4"
         }
       ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/smads-1.mp4"
+        ],
+        [],
+        [
+          "uploads/smads-2.mp4"
+        ],
+        [
+          "uploads/smads-3.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -5181,6 +5662,17 @@
         {
           "src": "uploads/sd-2.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/sd-1.mp4"
+        ],
+        [],
+        [],
+        [],
+        [
+          "uploads/sd-2.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -5334,6 +5826,19 @@
         {
           "src": "uploads/socialott-3.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/socialott-1.mp4"
+        ],
+        [
+          "uploads/socialott-2.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/socialott-3.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -5491,6 +5996,21 @@
           "src": "uploads/mat-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/mat-1.mp4"
+        ],
+        [
+          "uploads/mat-2.mp4"
+        ],
+        [],
+        [
+          "uploads/mat-3.mp4"
+        ],
+        [
+          "uploads/mat-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -5646,6 +6166,21 @@
         {
           "src": "uploads/proga-4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/proagaud-1.mp4"
+        ],
+        [
+          "uploads/progaud-2.mp4"
+        ],
+        [],
+        [
+          "uploads/progaud-3.mp4"
+        ],
+        [
+          "uploads/proga-4.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -5803,6 +6338,21 @@
           "src": "uploads/pv-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/pv-1.mp4"
+        ],
+        [
+          "uploads/pv-2.mp4"
+        ],
+        [],
+        [
+          "uploads/pv-3.mp4"
+        ],
+        [
+          "uploads/pv-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -5952,6 +6502,17 @@
         {
           "src": "uploads/na-2.mp4"
         }
+      ],
+      "stepVideos": [
+        [],
+        [
+          "uploads/na-1.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/na-2.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -6106,6 +6667,19 @@
           "src": "uploads/yt-3.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/yt-1.mp4"
+        ],
+        [
+          "uploads/yt-2.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/yt-3.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -6258,6 +6832,19 @@
         {
           "src": "uploads/stream3.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/stream1.mp4"
+        ],
+        [
+          "uploads/stream2.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/stream3.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -6415,6 +7002,21 @@
           "src": "uploads/yttv-4.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/yttv-1.mp4"
+        ],
+        [
+          "uploads/yttv-2.mp4"
+        ],
+        [],
+        [
+          "uploads/yttv03.mp4"
+        ],
+        [
+          "uploads/yttv-4.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -6570,6 +7172,21 @@
         {
           "src": "uploads/amz-4.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/amz1.mp4"
+        ],
+        [
+          "uploads/amz2.mp4"
+        ],
+        [],
+        [
+          "uploads/amz-3.mp4"
+        ],
+        [
+          "uploads/amz-4.mp4"
+        ]
       ],
       "steps": [
         "What it is",
@@ -6727,6 +7344,21 @@
           "src": "uploads/hulu-3.mp4"
         }
       ],
+      "stepVideos": [
+        [
+          "uploads/stream1.mp4"
+        ],
+        [
+          "uploads/hulu-1.mp4"
+        ],
+        [],
+        [
+          "uploads/hulu-2.mp4"
+        ],
+        [
+          "uploads/hulu-3.mp4"
+        ]
+      ],
       "steps": [
         "What it is",
         "Why it matters",
@@ -6879,6 +7511,19 @@
         {
           "src": "uploads/netf3.mp4"
         }
+      ],
+      "stepVideos": [
+        [
+          "uploads/netf1.mp4"
+        ],
+        [
+          "uploads/netfl2.mp4"
+        ],
+        [],
+        [],
+        [
+          "uploads/netf3.mp4"
+        ]
       ],
       "steps": [
         "What it is",

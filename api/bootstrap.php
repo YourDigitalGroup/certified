@@ -816,16 +816,28 @@ function password_link_message(string $purpose, array $user, string $link): arra
     $valid = 'This link works once and expires in ' . $ttl . '.';
     $text = $hi . "\n\n" . $intro . "\n\n" . $link . "\n\n" . $valid . ' ' . $ignore . "\n\n— " . $title;
     $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-    $html = '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif;color:#2b4863">'
-        . '<div style="max-width:520px;margin:32px auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:32px 36px">'
-        . '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2f6fa8;margin-bottom:12px">' . $e($title) . '</div>'
-        . '<p style="font-size:16px;line-height:1.5;margin:0 0 14px">' . $e($hi) . '</p>'
+    $html = mail_layout($title,
+        '<p style="font-size:16px;line-height:1.5;margin:0 0 14px">' . $e($hi) . '</p>'
         . '<p style="font-size:15px;line-height:1.55;margin:0 0 22px">' . $e($intro) . '</p>'
         . '<p style="margin:0 0 22px"><a href="' . $e($link) . '" style="display:inline-block;background:#6fb56a;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:9999px">' . $e($button) . '</a></p>'
         . '<p style="font-size:13px;line-height:1.5;color:#4a525c;margin:0 0 10px">' . $e($valid) . ' ' . $e($ignore) . '</p>'
-        . '<p style="font-size:12px;line-height:1.5;color:#6b7480;margin:0;word-break:break-all">If the button does not work, copy this address into your browser:<br><a href="' . $e($link) . '" style="color:#2f6fa8">' . $e($link) . '</a></p>'
-        . '</div></body></html>';
+        . '<p style="font-size:12px;line-height:1.5;color:#6b7480;margin:0;word-break:break-all">If the button does not work, copy this address into your browser:<br><a href="' . $e($link) . '" style="color:#2f6fa8">' . $e($link) . '</a></p>');
     return ['subject' => $subject, 'text' => $text, 'html' => $html];
+}
+
+/**
+ * Shared shell for every email: light page, white card, the 44i Digital logo (a PNG served from the
+ * portal, since most email clients ignore SVG) and the portal title above the message.
+ */
+function mail_layout(string $title, string $inner): string
+{
+    $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+    return '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif;color:#2b4863">'
+        . '<div style="max-width:520px;margin:32px auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:32px 36px">'
+        . '<img src="' . $e(site_url() . 'assets/logo-email.png') . '" alt="44i Digital" width="120" height="45" style="display:block;width:120px;height:45px;border:0;margin:0 0 18px">'
+        . '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2f6fa8;margin-bottom:12px">' . $e($title) . '</div>'
+        . $inner
+        . '</div></body></html>';
 }
 
 /** Create a fresh one-time token for $user (any older ones are dropped) and return the raw token. */

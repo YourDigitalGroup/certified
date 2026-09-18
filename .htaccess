@@ -1,0 +1,45 @@
+# Digital Certification portal — Apache settings for shared hosting.
+# Everything here is wrapped in IfModule, so a host without one of these modules simply skips it.
+
+# 1) Compress text responses. The training page is ~2 MB of HTML that travels as ~350 KB compressed.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/x-javascript application/json application/xml image/svg+xml
+</IfModule>
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+# 2) Make sure media types are right so caching and compression rules apply.
+AddType video/mp4 .mp4
+AddType video/webm .webm
+AddType image/webp .webp
+AddType font/woff2 .woff2
+
+# 3) Cache: videos, images and fonts for 30 days (they change by getting new names), scripts and styles
+#    for an hour with revalidation (so a deploy shows up quickly), pages never (they gate on sign-in).
+<IfModule mod_headers.c>
+  <FilesMatch "\.(mp4|webm|mov|jpe?g|png|gif|webp|svg|ico|woff2?|ttf)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  Header append Vary Accept-Encoding
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType video/mp4 "access plus 30 days"
+  ExpiresByType video/webm "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType font/woff2 "access plus 30 days"
+  ExpiresByType text/css "access plus 1 hour"
+  ExpiresByType application/javascript "access plus 1 hour"
+  ExpiresByType text/javascript "access plus 1 hour"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>

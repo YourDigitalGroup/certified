@@ -5,14 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Digital Certification · 44i Digital</title>
 <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+<!-- Fonts come from Google via the design-system CSS; warm those connections early. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="_ds/44i-digital-design-system-019ddfd7-d959-76f6-b3f7-3ace50b2dadd/colors_and_type.css">
+<!-- The app scripts download while portal-boot.js checks the sign-in; they run once it says so. -->
+<link rel="preload" href="support.js" as="script">
+<link rel="preload" href="vendor/react.production.min.js" as="script">
+<link rel="preload" href="vendor/react-dom.production.min.js" as="script">
 <script src="./portal-boot.js"></script>
+<script src="_ds/44i-digital-design-system-019ddfd7-d959-76f6-b3f7-3ace50b2dadd/_ds_bundle.js" defer></script>
+<script src="./image-slot.js" defer></script>
 </head>
 <body>
-<x-dc>
+<!-- The training template is kept inert inside <template> so the browser does not fetch its 125 videos
+     and 100+ images up front; support.js reads it from here and renders one screen at a time. -->
+<x-dc><template>
 <helmet>
-  <link rel="stylesheet" href="_ds/44i-digital-design-system-019ddfd7-d959-76f6-b3f7-3ace50b2dadd/colors_and_type.css">
-  <script src="_ds/44i-digital-design-system-019ddfd7-d959-76f6-b3f7-3ace50b2dadd/_ds_bundle.js"></script>
-  <script src="./image-slot.js"></script>
   <style>
     body { margin: 0; background: var(--gray-50); }
     image-slot::part(frame) { background: transparent; }
@@ -220,7 +229,7 @@
             </sc-if>
             <sc-if value="{{ seg.leftIsPhoto }}" hint-placeholder-val="{{ false }}">
             <div style="flex:none;width:240px;max-width:100%;aspect-ratio:9/16;border-radius:16px;overflow:hidden;">
-              <img src="{{ seg.leftPhotoSrc }}" alt="{{ seg.leftPhotoAlt }}" style="display:block;width:100%;height:100%;object-fit:cover;">
+              <img loading="lazy" decoding="async" src="{{ seg.leftPhotoSrc }}" alt="{{ seg.leftPhotoAlt }}" style="display:block;width:100%;height:100%;object-fit:cover;">
             </div>
             </sc-if>
             <sc-if value="{{ seg.leftIsVideo }}" hint-placeholder-val="{{ false }}">
@@ -230,7 +239,7 @@
             </sc-if>
             <sc-if value="{{ seg.leftIsGraphic }}" hint-placeholder-val="{{ false }}">
             <div style="flex:none;width:360px;max-width:100%;border-radius:16px;overflow:hidden;border:1px solid var(--gray-200);">
-              <img src="{{ seg.leftPhotoSrc }}" alt="{{ seg.leftPhotoAlt }}" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="{{ seg.leftPhotoSrc }}" alt="{{ seg.leftPhotoAlt }}" style="display:block;width:100%;height:auto;">
             </div>
             </sc-if>
             <div style="flex:1;min-width:280px;">
@@ -250,21 +259,21 @@
           <sc-if value="{{ seg.notLeftPhoto }}" hint-placeholder-val="{{ true }}">
           <sc-if value="{{ seg.hasTopImages }}" hint-placeholder-val="{{ false }}">
           <div style="width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;margin:0 0 24px;border:1px solid var(--gray-200);background:var(--gray-50);">
-            <img src="{{ seg.topImageSrc }}" alt="{{ seg.topImageAlt }}" style="display:block;width:100%;height:100%;object-fit:cover;">
+            <img loading="lazy" decoding="async" src="{{ seg.topImageSrc }}" alt="{{ seg.topImageAlt }}" style="display:block;width:100%;height:100%;object-fit:cover;">
           </div>
           </sc-if>
           <sc-if value="{{ seg.hasGraphic }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;justify-content:center;margin:0 0 28px;">
-            <img src="{{ seg.graphicSrc }}" alt="{{ seg.graphicAlt }}" style="display:block;width:100%;max-width:700px;height:auto;">
+            <img loading="lazy" decoding="async" src="{{ seg.graphicSrc }}" alt="{{ seg.graphicAlt }}" style="display:block;width:100%;max-width:700px;height:auto;">
           </div>
           </sc-if>
           <sc-if value="{{ seg.hasLaptop }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;justify-content:center;margin:0 0 28px;">
             <div style="position:relative;width:100%;max-width:700px;">
-              <img src="uploads/laptop-empty.jpg" alt="Screen capture on a laptop" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="uploads/laptop-empty.jpg" alt="Screen capture on a laptop" style="display:block;width:100%;height:auto;">
               <div style="position:absolute;left:13.4%;top:9.9%;width:73.2%;height:76.5%;overflow:hidden;">
                 <sc-if value="{{ seg.laptopHasSrc }}" hint-placeholder-val="{{ false }}">
-                <img src="{{ seg.laptopSrc }}" alt="{{ seg.slotPlaceholder }}" style="display:block;width:100%;height:auto;">
+                <img loading="lazy" decoding="async" src="{{ seg.laptopSrc }}" alt="{{ seg.slotPlaceholder }}" style="display:block;width:100%;height:auto;">
                 </sc-if>
                 <sc-if value="{{ seg.laptopNoSrc }}" hint-placeholder-val="{{ true }}">
                 <div style="width:100%;aspect-ratio:{{ seg.laptopRatio }};">
@@ -277,7 +286,7 @@
           </sc-if>
           <sc-if value="{{ seg.hasShot }}" hint-placeholder-val="{{ false }}">
           <div style="width:100%;height:480px;margin:0 0 28px;border-radius:16px;overflow:hidden;border:1px solid var(--gray-200);background:var(--gray-50);">
-            <img src="{{ seg.shotSrc }}" alt="{{ seg.shotAlt }}" style="display:block;width:100%;height:100%;object-fit:cover;object-position:top;">
+            <img loading="lazy" decoding="async" src="{{ seg.shotSrc }}" alt="{{ seg.shotAlt }}" style="display:block;width:100%;height:100%;object-fit:cover;object-position:top;">
           </div>
           </sc-if>
           <div>
@@ -297,7 +306,7 @@
           <div style="{{ seg.walkHeadRv }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 24px;line-height:1.15;">{{ seg.walkHeadText }}</h2></div>
           <sc-if value="{{ seg.walkUsesImg }}" hint-placeholder-val="{{ true }}">
           <div style="{{ seg.walkImgWrapSty }}">
-            <img src="{{ seg.walkImageSrc }}" alt="Walkthrough" style="display:block;width:100%;height:100%;object-fit:cover;">
+            <img loading="lazy" decoding="async" src="{{ seg.walkImageSrc }}" alt="Walkthrough" style="display:block;width:100%;height:100%;object-fit:cover;">
           </div>
           </sc-if>
           <sc-if value="{{ seg.walkUsesSlot }}" hint-placeholder-val="{{ false }}">
@@ -427,7 +436,7 @@
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player3.pct }};"></div></div>
           </div>
           <div>
-            <div style="width:100%;max-width:700px;margin:0 auto 28px;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid var(--gray-200);"><img src="{{ p1s4ImgSrc }}" alt="Owners &amp; Operators resource site" style="display:block;width:100%;height:100%;object-fit:cover;"></div>
+            <div style="width:100%;max-width:700px;margin:0 auto 28px;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid var(--gray-200);"><img loading="lazy" decoding="async" src="{{ p1s4ImgSrc }}" alt="Owners &amp; Operators resource site" style="display:block;width:100%;height:100%;object-fit:cover;"></div>
             <div>
               <div><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 8px;line-height:1.15;">A lot of it is already made for you.</h2><p style="font-size:16px;line-height:1.6;color:var(--gray-700);margin:0 0 18px;">Log into the <strong>Owners &amp; Operators</strong> section of your resource site — it’s sitting there. Go look before you build.</p></div>
               <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:28px 16px;">
@@ -472,7 +481,7 @@
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player5.pct }};"></div></div>
           </div>
           <div style="display:flex;justify-content:center;margin:0 0 28px;">
-            <img src="uploads/YDA-site-2.jpg" alt="A launched digital-agency website shown on a laptop" style="display:block;width:100%;max-width:700px;height:auto;">
+            <img loading="lazy" decoding="async" src="uploads/YDA-site-2.jpg" alt="A launched digital-agency website shown on a laptop" style="display:block;width:100%;max-width:700px;height:auto;">
           </div>
           <div style="{{ rv.p1f_head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 18px;line-height:1.15;">Two decisions. One line to carry.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:8px;">
@@ -497,9 +506,9 @@
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:293px;max-width:100%;height:520px;position:relative;border-radius:16px;overflow:hidden;background:#fff;">
               <video ref="{{ muteVideo }}" src="uploads/house-01.mp4" autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:{{ dh0photoOp }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);"></video>
-              <img src="uploads/house-1a.jpg" alt="The Digital House — foundation complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh0hA }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;">
-              <img src="uploads/house-1b.jpg" alt="The Digital House — walls complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh0hB }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;">
-              <img src="uploads/house-1c.jpg" alt="The Digital House — roof complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh0hC }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;">
+              <img loading="lazy" decoding="async" src="uploads/house-1a.jpg" alt="The Digital House — foundation complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh0hA }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;">
+              <img loading="lazy" decoding="async" src="uploads/house-1b.jpg" alt="The Digital House — walls complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh0hB }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;">
+              <img loading="lazy" decoding="async" src="uploads/house-1c.jpg" alt="The Digital House — roof complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh0hC }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;">
             </div>
             <div style="flex:1;min-width:300px;">
               <div style="{{ rv.dh0head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">The one that comes first &mdash; because it&rsquo;s the frame.</h2></div>
@@ -555,15 +564,15 @@
           <div style="{{ rv.dh2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three kinds of prospect it works on especially well.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.dh2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/house-3a.jpg" alt="A frustrated owner who has been burned by digital before" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-3a.jpg" alt="A frustrated owner who has been burned by digital before" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Already been burned</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">They bought digital, it did nothing, and now they&rsquo;re cynical. That cynicism is your best asset &mdash; you&rsquo;re about to explain <em>why</em> it did nothing, the first explanation anyone has offered them.</div></div>
               </div></div>
               <div style="{{ rv.dh2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/house-3b.jpg" alt="A slow site loading — an obviously weak foundation" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-3b.jpg" alt="A slow site loading — an obviously weak foundation" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">An obviously weak foundation</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">A slow site, a listing with the wrong hours, four reviews. You don&rsquo;t have to convince them anything is wrong &mdash; you just show them, in order.</div></div>
               </div></div>
               <div style="{{ rv.dh2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/house-3c.jpg" alt="Owners of a brand-new business celebrating their opening" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-3c.jpg" alt="Owners of a brand-new business celebrating their opening" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Never bought digital at all</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">The best long-term accounts you&rsquo;ll ever build &mdash; you get to start them in the right place instead of undoing somebody else&rsquo;s roof.</div></div>
               </div></div>
           </div>
@@ -581,9 +590,9 @@
           <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:360px;max-width:100%;display:flex;justify-content:center;">
               <div style="position:relative;width:100%;max-width:360px;aspect-ratio:900/1600;">
-                <img src="uploads/tinified%20(2)/house-4a.jpg" alt="The Digital House — foundation" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh3hA }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
-                <img src="uploads/tinified%20(2)/house-4b.jpg" alt="The Digital House — foundation and walls" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh3hB }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
-                <img src="uploads/tinified%20(2)/house-4c.jpg" alt="The Digital House — complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh3hC }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-4a.jpg" alt="The Digital House — foundation" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh3hA }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-4b.jpg" alt="The Digital House — foundation and walls" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh3hB }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-4c.jpg" alt="The Digital House — complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh3hC }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
               </div>
             </div>
             <div style="flex:1;min-width:300px;">
@@ -635,11 +644,11 @@
           <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:293px;max-width:100%;">
               <div style="position:relative;width:100%;aspect-ratio:900/1600;border-radius:16px;overflow:hidden;">
-                <img src="uploads/tinified%20(2)/house-6a.jpg" alt="The Digital House — before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hA }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
-                <img src="uploads/tinified%20(2)/house-6b.jpg" alt="The Digital House — foundation set" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hB }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
-                <img src="uploads/tinified%20(2)/house-6c.jpg" alt="The Digital House — walls up" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hC }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
-                <img src="uploads/tinified%20(2)/house-6d.jpg" alt="The Digital House — complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hD }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
-                <img src="uploads/landscaping.jpg" alt="A landscaping company's finished work" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5landOp }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-6a.jpg" alt="The Digital House — before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hA }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-6b.jpg" alt="The Digital House — foundation set" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hB }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-6c.jpg" alt="The Digital House — walls up" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hC }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/house-6d.jpg" alt="The Digital House — complete" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5hD }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
+                <img loading="lazy" decoding="async" src="uploads/landscaping.jpg" alt="A landscaping company's finished work" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ dh5landOp }};transition:opacity 700ms cubic-bezier(0.22,1,0.36,1);">
               </div>
             </div>
             <div style="flex:1;min-width:300px;">
@@ -768,7 +777,7 @@
           </div>
           <div style="{{ rv.fg3head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">Three moving parts.</h2></div>
           <div style="display:flex;justify-content:center;margin:0 0 24px;">
-            <img src="uploads/tinified%20(2)/fourge-4.jpg" alt="A fast, hand-built Fourge site on a laptop" style="display:block;width:100%;max-width:700px;height:auto;">
+            <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/fourge-4.jpg" alt="A fast, hand-built Fourge site on a laptop" style="display:block;width:100%;max-width:700px;height:auto;">
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
           <div style="{{ rv.fg3m1 }}"><div style="height:100%;border:1px solid var(--gray-100);border-radius:12px;padding:22px 20px;"><div style="width:44px;height:44px;border-radius:9999px;background:var(--brand-blue-soft);color:var(--brand-blue-deep);font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">1</div><div style="font-size:16px;font-weight:700;margin-bottom:6px;">It&rsquo;s built for one job</div><div style="font-size:15px;line-height:1.55;color:var(--gray-600);">Not a general-purpose builder with a local template dropped on top &mdash; designed from the beginning to turn visitors into contacts. Speed is engineered in at the platform level, and every site is <strong>hand-crafted</strong> by real people around that specific business. Not a template, not generated.</div></div></div>
@@ -809,9 +818,9 @@
           <div style="{{ rv.fg5head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">What&rsquo;s in it &mdash; and what the owner gets.</h2></div>
           <div style="display:flex;justify-content:center;margin:0 0 24px;">
             <div style="position:relative;width:100%;max-width:700px;aspect-ratio:1710/1000;">
-              <img src="uploads/tinified%20(2)/fourge-6a.jpg" alt="The Fourge platform loading" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ fg5imgA }};transition:opacity 600ms ease;">
-              <img src="uploads/tinified%20(2)/fourge-6b.jpg" alt="A fresh site opening in the browser" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ fg5imgB }};transition:opacity 600ms ease;">
-              <img src="uploads/tinified%20(2)/fourge-6c.jpg" alt="The finished carpet-cleaning site" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ fg5imgC }};transition:opacity 600ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/fourge-6a.jpg" alt="The Fourge platform loading" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ fg5imgA }};transition:opacity 600ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/fourge-6b.jpg" alt="A fresh site opening in the browser" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ fg5imgB }};transition:opacity 600ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/fourge-6c.jpg" alt="The finished carpet-cleaning site" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ fg5imgC }};transition:opacity 600ms ease;">
               <div style="position:absolute;left:24%;right:24%;top:44%;display:flex;flex-direction:column;gap:10px;pointer-events:none;opacity:{{ fg5imgB }};transition:opacity 600ms ease;">
                 <div style="font-size:15px;font-weight:600;color:#7fb4d6;letter-spacing:0.01em;">loading<span style="animation:fgDots 1.4s ease-in-out infinite;">.</span><span style="animation:fgDots 1.4s ease-in-out 0.2s infinite;">.</span><span style="animation:fgDots 1.4s ease-in-out 0.4s infinite;">.</span></div>
                 <div style="width:100%;height:20px;border:2px solid #bfe0f2;border-radius:9999px;padding:2px;box-sizing:border-box;">
@@ -842,7 +851,7 @@
             <button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button>
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div>
           </div>
-          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/fourge_logo_white.png" alt="Fourge" style="height:69px;width:auto;display:block;"></div>
+          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/fourge_logo_white.jpg" alt="Fourge" style="height:69px;width:auto;display:block;"></div>
           <div style="{{ rv.fg6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
           <div style="display:flex;flex-wrap:wrap;gap:14px;">
             <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.fg6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Built for one job</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Engineered speed, real structure, hand-crafted per business.</div></div></div></div>
@@ -1418,7 +1427,7 @@
             <button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button>
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div>
           </div>
-          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/social-marketing_white.png" alt="Social media platforms" style="height:90px;width:auto;display:block;"></div>
+          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/social-marketing_white.jpg" alt="Social media platforms" style="height:90px;width:auto;display:block;"></div>
           <div style="{{ rv.sm6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
           <div style="display:flex;flex-wrap:wrap;gap:14px;">
             <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.sm6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">The right rooms</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Start from who their best customer is, then pick &mdash; don&rsquo;t try to be everywhere.</div></div></div></div>
@@ -1837,9 +1846,9 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:240px;max-width:100%;position:relative;">
-              <img src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
               <div style="position:absolute;top:30.7%;left:20%;width:66%;height:3.4%;display:flex;align-items:center;font-size:11px;color:#202124;font-family:var(--font-sans);white-space:nowrap;overflow:hidden;opacity:{{ semQueryOpacity }};">{{ semTyped }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;animation:dhCaret 1s step-end infinite;"></span></div>
-              <img src="uploads/sem-2b.jpg" alt="Google results for &ldquo;emergency pest control&rdquo; with sponsored listings" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ semResultOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/sem-2b.jpg" alt="Google results for &ldquo;emergency pest control&rdquo; with sponsored listings" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ semResultOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <div style="{{ rv.sem1head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Why should an advertiser spend money on this?</h2></div>
@@ -1950,11 +1959,11 @@
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:240px;max-width:100%;">
               <div style="position:relative;width:100%;">
-                <img src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;border-radius:16px;">
+                <img loading="lazy" decoding="async" src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;border-radius:16px;">
                 <div style="position:absolute;top:30.7%;left:20%;width:66%;height:3.4%;display:flex;align-items:center;font-size:11px;color:#202124;font-family:var(--font-sans);white-space:nowrap;overflow:hidden;">{{ sem5typed }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;animation:dhCaret 1s step-end infinite;"></span></div>
-                <img src="uploads/sem-6b.jpg" alt="Search results for &ldquo;emergency pest control&rdquo; whose ad opens the company-history page" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ sem56bOp }};transition:opacity 550ms ease;">
-                <img src="uploads/sem-6c.jpg" alt="Search results with a tight, wasp-specific ad" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ sem56cOp }};transition:opacity 550ms ease;">
-                <img src="uploads/sem-6d.jpg" alt="The matching Emergency Wasp Service landing page with a call button at the top" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ sem56dOp }};transition:opacity 550ms ease;">
+                <img loading="lazy" decoding="async" src="uploads/sem-6b.jpg" alt="Search results for &ldquo;emergency pest control&rdquo; whose ad opens the company-history page" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ sem56bOp }};transition:opacity 550ms ease;">
+                <img loading="lazy" decoding="async" src="uploads/sem-6c.jpg" alt="Search results with a tight, wasp-specific ad" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ sem56cOp }};transition:opacity 550ms ease;">
+                <img loading="lazy" decoding="async" src="uploads/sem-6d.jpg" alt="The matching Emergency Wasp Service landing page with a call button at the top" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ sem56dOp }};transition:opacity 550ms ease;">
               </div>
             </div>
             <div style="flex:1;min-width:300px;">
@@ -2004,7 +2013,7 @@
             </div></sc-if>
           </div>
           <sc-if value="{{ sem6ShowLines }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
-            <img src="uploads/lives-for-every-room.jpg" alt="An account executive in a relaxed client conversation over coffee" style="flex:none;width:240px;max-width:100%;height:520px;border-radius:16px;object-fit:cover;display:block;">
+            <img loading="lazy" decoding="async" src="uploads/lives-for-every-room.jpg" alt="An account executive in a relaxed client conversation over coffee" style="flex:none;width:240px;max-width:100%;height:520px;border-radius:16px;object-fit:cover;display:block;">
             <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px;">
               <div style="{{ rv.sem6l1 }}">
                 <div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:10px;">Lines for the room</div>
@@ -2015,7 +2024,7 @@
             </div>
           </div></sc-if>
           <sc-if value="{{ sem6ShowBoxes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
-            <img src="uploads/lives-for-every-room.jpg" alt="An account executive in a relaxed client conversation over coffee" style="flex:none;width:240px;max-width:100%;height:520px;border-radius:16px;object-fit:cover;display:block;">
+            <img loading="lazy" decoding="async" src="uploads/lives-for-every-room.jpg" alt="An account executive in a relaxed client conversation over coffee" style="flex:none;width:240px;max-width:100%;height:520px;border-radius:16px;object-fit:cover;display:block;">
             <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px;">
               <sc-if value="{{ sem6ShowNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:14px;">
               <div style="{{ rv.sem6ret }}"><div style="background:var(--brand-blue-soft);border:1px solid var(--brand-blue-glow);border-radius:14px;padding:16px 18px;"><div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:6px;">Retention trap &mdash; pre-frame it early</div><div style="font-size:15px;line-height:1.55;color:var(--gray-700);">Clients judge SEM on clicks, then feel cheated when clicks don&rsquo;t feel like customers. Say it first: <em>&ldquo;Clicks are the cost, not the result. What we&rsquo;ll look at together is calls and forms.&rdquo;</em></div></div></div>
@@ -2945,7 +2954,7 @@
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Repeat visits people skip</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Vets, dentists, salons, auto service, chiropractors. There&rsquo;s a natural rhythm, and a big chunk of the list has fallen out of it.</div></div>
               </div></div>
               <div style="{{ rv.crm2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/crm-3b.jpg" alt="HVAC technician servicing a furnace" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/crm-3b.jpg" alt="HVAC technician servicing a furnace" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">A long gap between purchases</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">HVAC, roofing, flooring, furniture, powersports. Somebody who bought a furnace eleven years ago is exactly the right person to talk to now &mdash; and the client already has their name.</div></div>
               </div></div>
               <div style="{{ rv.crm2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
@@ -3452,7 +3461,7 @@
             <button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button>
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div>
           </div>
-          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/social-icons_white.png" alt="Social media platforms" style="height:90px;width:auto;display:block;"></div>
+          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/social-icons_white.jpg" alt="Social media platforms" style="height:90px;width:auto;display:block;"></div>
           <div style="{{ rv.sma6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
           <div style="display:flex;flex-wrap:wrap;gap:14px;">
             <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.sma6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Build the audience</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Start from the best customer, then pick the matching platform.</div></div></div></div>
@@ -3664,7 +3673,7 @@
             <button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button>
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div>
           </div>
-          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/social-icons_white.png" alt="Social media platforms" style="height:90px;width:auto;display:block;"></div>
+          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/social-icons_white.jpg" alt="Social media platforms" style="height:90px;width:auto;display:block;"></div>
           <div style="{{ rv.sda6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
           <div style="display:flex;flex-wrap:wrap;gap:14px;">
             <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.sda6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Build it like a post</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">From real content, plus a CTA button and caption control.</div></div></div></div>
@@ -3758,15 +3767,15 @@
           <div style="{{ rv.ott2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three easy targets.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.ott2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/socialott-3a.jpg" alt="A builder on a residential job site" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/socialott-3a.jpg" alt="A builder on a residential job site" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Big-ticket businesses that need to look established</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Builders, remodelers, auto, medical practices, banks, attorneys. When somebody’s about to spend serious money, they want the business to look permanent — and television does that better than anything else we sell.</div></div>
               </div></div>
               <div style="{{ rv.ott2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/socialott-3b.jpg" alt="A professional video camera on a set" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/socialott-3b.jpg" alt="A professional video camera on a set" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Businesses that already have video</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Social video, a walkthrough, an old TV commercial — they’re most of the way there. And a radio spot’s audio can become video, same as on social ads.</div></div>
               </div></div>
               <div style="{{ rv.ott2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/socialott-3c.jpg" alt="A row of vehicles on a dealership lot" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/socialott-3c.jpg" alt="A row of vehicles on a dealership lot" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Businesses whose customers are families</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Anything decided in a living room — schools, vacations, vehicles, home improvement, dining. One television reaches everybody in the room, which almost nothing else we sell can do.</div></div>
               </div></div>
           </div>
@@ -3783,7 +3792,7 @@
           </div>
           <div style="{{ rv.ott3head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">Three moving parts.</h2></div>
           <div style="display:flex;justify-content:center;margin:0 0 24px;">
-            <img src="uploads/socialott-4.png" alt="A local business's social video rebuilt as a TV ad on a streaming TV" style="display:block;width:100%;max-width:700px;height:auto;">
+            <img loading="lazy" decoding="async" src="uploads/socialott-4.webp" alt="A local business's social video rebuilt as a TV ad on a streaming TV" style="display:block;width:100%;max-width:700px;height:auto;">
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
           <div style="{{ rv.ott3m1 }}"><div style="background:var(--brand-blue-soft);border:1px solid var(--brand-blue-soft);border-radius:14px;padding:22px 20px;height:100%;box-sizing:border-box;"><div style="width:38px;height:38px;border-radius:9999px;background:var(--brand-blue);color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">1</div><div style="font-size:16px;font-weight:700;margin-bottom:6px;line-height:1.25;">Build it from what they already have</div><div style="font-size:14px;line-height:1.55;color:var(--gray-600);">We rebuild an existing social video as a television ad — their logo, business name, a description, formatted for the screen. We’re <em>not</em> producing a polished thirty-second commercial; it keeps the social look on purpose, because that reads as real rather than corporate. If they have nothing, video can be produced.</div></div></div>
@@ -3823,8 +3832,8 @@
           </div>
           <div style="{{ rv.ott5head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">What’s in it &mdash; and what the owner gets.</h2></div>
           <div style="position:relative;width:100%;max-width:640px;margin:0 auto 24px;">
-            <img src="uploads/socialott-6a.png" alt="A home builder's social video rebuilt as a streaming-TV ad" style="display:block;width:100%;height:auto;">
-            <img src="uploads/socialott-6b.png" alt="The same TV ad with a QR code linking to the builder's floor plans" style="position:absolute;inset:0;display:block;width:100%;height:auto;opacity:{{ rv.ott5qrOpacity }};transition:opacity 600ms ease;">
+            <img loading="lazy" decoding="async" src="uploads/socialott-6a.webp" alt="A home builder's social video rebuilt as a streaming-TV ad" style="display:block;width:100%;height:auto;">
+            <img loading="lazy" decoding="async" src="uploads/socialott-6b.webp" alt="The same TV ad with a QR code linking to the builder's floor plans" style="position:absolute;inset:0;display:block;width:100%;height:auto;opacity:{{ rv.ott5qrOpacity }};transition:opacity 600ms ease;">
           </div>
           <div style="display:{{ rv.ott5cardsDisplay }};gap:16px;flex-wrap:wrap;margin:0 0 22px;">
             <div style="flex:1 1 280px;"><div style="{{ rv.ott5feat }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:18px 20px;height:100%;box-sizing:border-box;"><div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:10px;">What’s in it</div><ul style="font-size:15px;line-height:1.55;color:var(--gray-700);margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:6px;"><li>Existing social video converted into a TV ad with logo, name, and description</li><li>A QR code linking to their site</li><li>Optional video production</li><li>Audience segments and the full targeting toolbox</li><li>A daily schedule</li><li>Ad-set strategy and management with weekly refinement</li><li>Optional on-site-visit measurement</li><li>Reporting</li></ul></div></div></div>
@@ -3858,7 +3867,7 @@
 <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:14px;">Section 8: Into the Room</div>
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player7.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player7.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player7.pct }};"></div></div></div>
 <div style="display:{{ rv.ott7phaseADisplay }};gap:32px;align-items:flex-start;flex-wrap:wrap;">
-<img src="uploads/IN-THE%20ROOM-1.jpg" alt="A rep meeting a local business owner" style="flex:none;width:240px;max-width:100%;height:520px;object-fit:cover;border-radius:16px;">
+<img loading="lazy" decoding="async" src="uploads/IN-THE%20ROOM-1.jpg" alt="A rep meeting a local business owner" style="flex:none;width:240px;max-width:100%;height:520px;object-fit:cover;border-radius:16px;">
 <div style="flex:1;min-width:300px;">
 <div style="{{ rv.ott7head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 12px;line-height:1.15;">Before the quiz &mdash; the meeting itself.</h2><p style="font-size:16px;line-height:1.6;color:var(--gray-700);margin:0 0 18px;">Two questions you&rsquo;ll get, the argument to lead with, and one thing to settle before you leave.</p></div>
 <div style="{{ rv.ott7obj1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:18px 20px;margin:0 0 14px;"><div style="font-size:16px;font-weight:700;color:var(--brand-ink);margin-bottom:6px;">&ldquo;So this is a social media ad?&rdquo;</div><div style="font-size:15px;line-height:1.55;color:var(--gray-600);">No. And explain the name before they work out their own version of it. &ldquo;Social describes the creative, not where it plays. This runs on the television &mdash; same streaming services as any TV buy. The ad just looks like their social video instead of a commercial.&rdquo;</div></div></div>
@@ -4706,15 +4715,15 @@
           <div style="{{ rv.yt2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three easy targets.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.yt2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/yt-3a.jpg" alt="A child swimming in a backyard pool" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-3a.jpg" alt="A child swimming in a backyard pool" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Businesses whose customers watch how-to videos</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Farm and equipment dealers, auto parts, hardware, pools, music stores, hobby shops. Their customer is already on YouTube learning to do the thing, and the ad can be aimed at exactly those videos.</div></div>
               </div></div>
               <div style="{{ rv.yt2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/yt-3b.jpg" alt="A newly remodeled kitchen" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-3b.jpg" alt="A newly remodeled kitchen" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Businesses with something to demonstrate</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Equipment, services, transformations, facilities. Video does the showing, and YouTube is where people go expecting to watch something.</div></div>
               </div></div>
               <div style="{{ rv.yt2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified%20(2)/yt-3c.jpg" alt="A magnifying glass finding one person in a crowd" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-3c.jpg" alt="A magnifying glass finding one person in a crowd" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Businesses with a narrow, specific customer</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">A niche is usually a weakness in advertising &mdash; too small to buy efficiently. Here it&rsquo;s an advantage, because you can aim at the exact videos that niche watches.</div></div>
               </div></div>
           </div>
@@ -4731,7 +4740,7 @@
           </div>
           <div style="{{ rv.yt3head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">Three moving parts.</h2></div>
           <div style="display:flex;justify-content:center;margin:0 0 24px;">
-            <img src="uploads/tinified%20(2)/yt-4.jpg" alt="A local business display ad running on a laptop, with ad-slot placements alongside" style="display:block;width:100%;max-width:860px;height:auto;">
+            <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-4.jpg" alt="A local business display ad running on a laptop, with ad-slot placements alongside" style="display:block;width:100%;max-width:860px;height:auto;">
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
           <div style="{{ rv.yt3m1 }}"><div style="background:var(--brand-blue-soft);border-radius:14px;padding:22px 22px 24px;height:100%;box-sizing:border-box;"><div style="width:40px;height:40px;border-radius:9999px;background:var(--brand-blue);color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-family:var(--font-sans);">1</div><div style="font-size:16px;font-weight:700;margin-bottom:6px;">Four formats, each with a clock</div><ul style="font-size:15px;line-height:1.5;color:var(--gray-700);margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:8px;"><li><strong>Skippable</strong> &mdash; skip after five seconds; runs twelve seconds to three minutes, the workhorse.</li><li><strong>Non-skippable</strong> &mdash; up to fifteen seconds, watched through, best for awareness.</li><li><strong>Bumper</strong> &mdash; six seconds, unskippable, one simple idea.</li><li><strong>Outstream</strong> &mdash; on Google&rsquo;s partner sites and apps, mobile and tablet only.</li></ul></div></div>
@@ -4772,9 +4781,9 @@
           <div style="{{ rv.yt5head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">What&rsquo;s in it &mdash; and what the owner gets.</h2></div>
           <div style="display:flex;justify-content:center;margin:0 0 24px;">
             <div style="position:relative;width:100%;max-width:860px;margin:0 auto;aspect-ratio:1659/1012;">
-              <img src="uploads/tinified%20(2)/yt-6a.jpg" alt="The YouTube home screen on a laptop" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ rv.yt6aOpacity }};transition:opacity 500ms ease;">
-              <img src="uploads/tinified%20(2)/yt-6b.jpg" alt="A sponsored tractor-repair result in YouTube search" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ rv.yt6bOpacity }};transition:opacity 500ms ease;">
-              <img src="uploads/tinified%20(2)/yt-6c.jpg" alt="A tractor-repair video ad playing before a how-to video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ rv.yt6cOpacity }};transition:opacity 500ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-6a.jpg" alt="The YouTube home screen on a laptop" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ rv.yt6aOpacity }};transition:opacity 500ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-6b.jpg" alt="A sponsored tractor-repair result in YouTube search" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ rv.yt6bOpacity }};transition:opacity 500ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified%20(2)/yt-6c.jpg" alt="A tractor-repair video ad playing before a how-to video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ rv.yt6cOpacity }};transition:opacity 500ms ease;">
             </div>
           </div>
           <div style="display:{{ rv.yt5cardsDisplay }};gap:16px;flex-wrap:wrap;margin:0 0 22px;">
@@ -4795,7 +4804,7 @@
             <button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button>
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div>
           </div>
-          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/YouTube_white.png" alt="YouTube" style="height:90px;width:auto;display:block;"></div>
+          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/YouTube_white.jpg" alt="YouTube" style="height:90px;width:auto;display:block;"></div>
           <div style="{{ rv.yt6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
           <div style="display:flex;flex-wrap:wrap;gap:14px;">
             <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.yt6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Four formats, four clocks</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Skippable up to three minutes, non-skippable up to fifteen seconds, bumper at six, outstream on partner sites.</div></div></div></div>
@@ -4971,7 +4980,7 @@
 <div id="ytv-step-6" data-r="pad-lg" style="background:#fff;border:1px solid var(--gray-200);border-radius:20px;padding:40px 48px;position:relative;margin-bottom:24px;animation:dhFadeUp 600ms cubic-bezier(0.22,1,0.36,1) both;">
 <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:14px;">Section 7: Recap</div>
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div></div>
-<div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/YouTubeTV_white.png" alt="YouTube TV" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.ytv6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div><div style="display:flex;flex-wrap:wrap;gap:14px;"><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.ytv6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Channels and geography</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">The ad runs where it fits and inside the area they serve.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.ytv6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Demographics if needed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Optional targeting, knowing it raises the cost to reach a thousand people.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.ytv6r3 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">3</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">A way to respond</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">A QR code straight off the screen.</div></div></div></div></div><div style="{{ rv.ytv6close }}"><div style="background:var(--brand-blue-soft);border-radius:14px;padding:20px 22px;margin-top:20px;"><p style="font-size:16px;line-height:1.6;color:var(--gray-700);margin:0;">Two lines to carry in: <strong>these viewers cancelled cable &mdash; a cable buy will never reach them.</strong> And keep the two YouTube products separate &mdash; this is live television with channels and sports; the other is the video platform.</p></div></div>
+<div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/YouTubeTV_white.jpg" alt="YouTube TV" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.ytv6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div><div style="display:flex;flex-wrap:wrap;gap:14px;"><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.ytv6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Channels and geography</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">The ad runs where it fits and inside the area they serve.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.ytv6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Demographics if needed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Optional targeting, knowing it raises the cost to reach a thousand people.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.ytv6r3 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">3</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">A way to respond</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">A QR code straight off the screen.</div></div></div></div></div><div style="{{ rv.ytv6close }}"><div style="background:var(--brand-blue-soft);border-radius:14px;padding:20px 22px;margin-top:20px;"><p style="font-size:16px;line-height:1.6;color:var(--gray-700);margin:0;">Two lines to carry in: <strong>these viewers cancelled cable &mdash; a cable buy will never reach them.</strong> And keep the two YouTube products separate &mdash; this is live television with channels and sports; the other is the video platform.</p></div></div>
 </div>
 </sc-if>
 <sc-if value="{{ showStep7 }}" hint-placeholder-val="{{ false }}">
@@ -5042,7 +5051,7 @@
 <sc-if value="{{ showStep6 }}" hint-placeholder-val="{{ false }}">
 <div id="pri-step-6" data-r="pad-lg" style="background:#fff;border:1px solid var(--gray-200);border-radius:20px;padding:40px 48px;position:relative;margin-bottom:24px;animation:dhFadeUp 600ms cubic-bezier(0.22,1,0.36,1) both;">
 <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:14px;">Section 7: Recap</div>
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div></div><div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/prime-video_white.png" alt="Prime Video" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.pri6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div><div style="display:flex;flex-wrap:wrap;gap:14px;"><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.pri6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Premium and unskippable</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Prime Video content, full screen, can&rsquo;t be skipped, brand-safe.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.pri6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Purchase-based targeting</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Built on what households actually bought, as aggregated groups &mdash; never anyone&rsquo;s individual history.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.pri6r3 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">3</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Layered and managed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Geography, demographics, and placement on top, refined weekly.</div></div></div></div></div><div style="{{ rv.pri6close }}"><div style="margin-top:20px;background:var(--brand-blue-soft);border-radius:14px;padding:20px 22px;font-size:15px;line-height:1.55;color:var(--brand-ink);">Everybody else guesses what people want &mdash; Amazon knows what they bought. And the better question: not <em>who</em> is your customer, but <em>what do your customers buy?</em></div></div>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div></div><div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/prime-video_white.jpg" alt="Prime Video" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.pri6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div><div style="display:flex;flex-wrap:wrap;gap:14px;"><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.pri6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Premium and unskippable</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Prime Video content, full screen, can&rsquo;t be skipped, brand-safe.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.pri6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Purchase-based targeting</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Built on what households actually bought, as aggregated groups &mdash; never anyone&rsquo;s individual history.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.pri6r3 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">3</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Layered and managed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Geography, demographics, and placement on top, refined weekly.</div></div></div></div></div><div style="{{ rv.pri6close }}"><div style="margin-top:20px;background:var(--brand-blue-soft);border-radius:14px;padding:20px 22px;font-size:15px;line-height:1.55;color:var(--brand-ink);">Everybody else guesses what people want &mdash; Amazon knows what they bought. And the better question: not <em>who</em> is your customer, but <em>what do your customers buy?</em></div></div>
 </div>
 </sc-if>
 <sc-if value="{{ showStep7 }}" hint-placeholder-val="{{ false }}">
@@ -5112,7 +5121,7 @@
 <sc-if value="{{ showStep6 }}" hint-placeholder-val="{{ false }}">
 <div id="hulu-step-6" data-r="pad-lg" style="background:#fff;border:1px solid var(--gray-200);border-radius:20px;padding:40px 48px;position:relative;margin-bottom:24px;animation:dhFadeUp 600ms cubic-bezier(0.22,1,0.36,1) both;">
 <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:14px;">Section 7: Recap</div>
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div></div><div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/hulu_white.png" alt="Hulu" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.hulu6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div><div style="display:flex;flex-wrap:wrap;gap:14px;"><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.hulu6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Premium long-form</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Full episodes, series, and movies, full screen, non-skippable, across TV, mobile, and desktop.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.hulu6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Aimed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Demographic and behavioral targeting, plus geography and content placement.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.hulu6r3 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">3</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Chosen deliberately</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">The broad streaming buy for reach; Hulu when the environment is part of the message. Separate buys, not overlapping.</div></div></div></div></div><div style="{{ rv.hulu6close }}"><div style="margin-top:20px;background:var(--brand-blue-soft);border-radius:14px;padding:20px 22px;font-size:15px;line-height:1.55;color:var(--brand-ink);">You&rsquo;re not just buying streaming &mdash; you&rsquo;re buying the show. And be clear: Hulu is its own buy, not something tucked inside a broader package.</div></div>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div></div><div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/hulu_white.jpg" alt="Hulu" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.hulu6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div><div style="display:flex;flex-wrap:wrap;gap:14px;"><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.hulu6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Premium long-form</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Full episodes, series, and movies, full screen, non-skippable, across TV, mobile, and desktop.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.hulu6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Aimed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Demographic and behavioral targeting, plus geography and content placement.</div></div></div></div><div style="flex:1 1 200px;display:flex;"><div style="{{ rv.hulu6r3 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">3</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Chosen deliberately</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">The broad streaming buy for reach; Hulu when the environment is part of the message. Separate buys, not overlapping.</div></div></div></div></div><div style="{{ rv.hulu6close }}"><div style="margin-top:20px;background:var(--brand-blue-soft);border-radius:14px;padding:20px 22px;font-size:15px;line-height:1.55;color:var(--brand-ink);">You&rsquo;re not just buying streaming &mdash; you&rsquo;re buying the show. And be clear: Hulu is its own buy, not something tucked inside a broader package.</div></div>
 </div>
 </sc-if>
 <sc-if value="{{ showStep7 }}" hint-placeholder-val="{{ false }}">
@@ -5193,7 +5202,7 @@
 <div id="net-step-3" data-r="pad-lg" style="background:#fff;border:1px solid var(--gray-200);border-radius:20px;padding:40px 48px;position:relative;margin-bottom:24px;animation:dhFadeUp 600ms cubic-bezier(0.22,1,0.36,1) both;">
 <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:14px;">Section 4: How It Works</div>
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player3.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player3.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player3.pct }};"></div></div></div>
-<img src="assets/netflix-logo.jpg" alt="Netflix" style="display:block;width:339px;max-width:100%;height:auto;margin:0 auto 20px;">
+<img loading="lazy" decoding="async" src="assets/netflix-logo.jpg" alt="Netflix" style="display:block;width:339px;max-width:100%;height:auto;margin:0 auto 20px;">
 <div>
 <div style="{{ rv.net3head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px;line-height:1.15;">Three moving parts.</h2></div>
 <div style="display:flex;flex-direction:column;gap:20px;">
@@ -5280,7 +5289,7 @@
 <div id="net-step-6" data-r="pad-lg" style="background:#fff;border:1px solid var(--gray-200);border-radius:20px;padding:40px 48px;position:relative;margin-bottom:24px;animation:dhFadeUp 600ms cubic-bezier(0.22,1,0.36,1) both;">
 <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-deep);margin-bottom:14px;">Section 7: Recap</div>
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:9999px;padding:8px 16px 8px 8px;"><button onClick="{{ player6.toggle }}" style="width:34px;height:34px;border-radius:9999px;border:none;background:var(--brand-blue);color:#fff;font-size:12px;cursor:pointer;flex:none;font-family:var(--font-sans);">{{ player6.icon }}</button><div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div></div>
-<div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/netflix_white.png" alt="Netflix" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.net6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
+<div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/netflix_white.jpg" alt="Netflix" style="height:90px;width:auto;display:block;"></div><div style="{{ rv.net6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
 <div style="display:flex;flex-wrap:wrap;gap:14px;">
 <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.net6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">1</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Premium content, every screen</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Series, films, and live events &mdash; mostly on the television, across every screen, brand-safe throughout.</div></div></div></div>
 <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.net6r2 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;"><div style="font-size:26px;font-weight:800;color:var(--brand-blue);line-height:1;margin-bottom:8px;">2</div><div style="font-size:15px;font-weight:700;margin-bottom:4px;">Aimed</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Demographic and behavioral targeting &mdash; audience groups, not individuals.</div></div></div></div>
@@ -5327,9 +5336,9 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;">
-              <img src="uploads/Phone_GMB_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
               <div style="position:absolute;top:30.4%;left:19%;width:40%;height:3.4%;display:flex;align-items:center;font-size:10px;color:#202124;font-family:var(--font-sans);white-space:nowrap;overflow:hidden;opacity:{{ phoneQueryOpacity }};">{{ typedQuery }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;animation:dhCaret 1s step-end infinite;"></span></div>
-              <img src="uploads/Phone_GMB_Pizza3stars.jpg" alt="Google “pizza near me” local pack on a phone" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ phoneMapOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Pizza3stars.jpg" alt="Google “pizza near me” local pack on a phone" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ phoneMapOpacity }};transition:opacity 550ms ease;">
               <div style="position:absolute;left:8%;top:58.5%;width:84%;height:16%;border:3px solid #4fb92e;border-radius:0;opacity:{{ phoneBoxOpacity }};transform:{{ phoneBoxTransform }};transition:opacity 380ms ease, transform 380ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;"></div>
             </div>
             <div style="flex:1;min-width:280px;">
@@ -5374,7 +5383,7 @@
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;animation:dhGroupIn 700ms cubic-bezier(0.22,1,0.36,1) 300ms both;">
             <div style="{{ rv.s2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
               <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;">
-                <img src="uploads/restaurant.jpg" alt="Restaurant burger and fries" style="width:100%;height:100%;object-fit:cover;display:block;">
+                <img loading="lazy" decoding="async" src="uploads/restaurant.jpg" alt="Restaurant burger and fries" style="width:100%;height:100%;object-fit:cover;display:block;">
               </div>
               <div style="padding:16px 18px;">
                 <div style="font-size:15px;font-weight:700;margin-bottom:5px;">Restaurants &amp; cafés</div>
@@ -5383,7 +5392,7 @@
             </div></div>
             <div style="{{ rv.s2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
               <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;">
-                <img src="uploads/hvac.jpg" alt="HVAC technician with gauges" style="width:100%;height:100%;object-fit:cover;display:block;">
+                <img loading="lazy" decoding="async" src="uploads/hvac.jpg" alt="HVAC technician with gauges" style="width:100%;height:100%;object-fit:cover;display:block;">
               </div>
               <div style="padding:16px 18px;">
                 <div style="font-size:15px;font-weight:700;margin-bottom:5px;">Home &amp; repair services</div>
@@ -5392,7 +5401,7 @@
             </div></div>
             <div style="{{ rv.s2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
               <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;">
-                <img src="uploads/salon.jpg" alt="Salon haircut" style="width:100%;height:100%;object-fit:cover;display:block;">
+                <img loading="lazy" decoding="async" src="uploads/salon.jpg" alt="Salon haircut" style="width:100%;height:100%;object-fit:cover;display:block;">
               </div>
               <div style="padding:16px 18px;">
                 <div style="font-size:15px;font-weight:700;margin-bottom:5px;">Appointment businesses</div>
@@ -5414,8 +5423,8 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;">
-              <img src="uploads/Phone_GMB_Pizza3stars.jpg" alt="Google “pizza near me” local pack on a phone" style="display:block;width:100%;height:auto;">
-              <img src="uploads/Phone_GMB_Listing.jpg" alt="Main Street Pizza listing with Call and Directions" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ s3ListingOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Pizza3stars.jpg" alt="Google “pizza near me” local pack on a phone" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Listing.jpg" alt="Main Street Pizza listing with Call and Directions" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ s3ListingOpacity }};transition:opacity 550ms ease;">
               <div style="position:absolute;left:10%;top:43%;width:79%;height:14.5%;border:3px solid #4fb92e;opacity:{{ s3BoxOpacity }};transform:{{ s3BoxTransform }};transition:opacity 380ms ease, transform 380ms cubic-bezier(0.22,1,0.36,1);pointer-events:none;"></div>
             </div>
             <div style="flex:1;min-width:300px;">
@@ -5508,11 +5517,11 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;">
-              <img src="uploads/Phone_GMB_Listing.jpg" alt="Main Street Pizza listing with Call and Directions" style="display:block;width:100%;height:auto;border-radius:16px;">
-              <img src="uploads/Phone_GMB_Reviews.jpg" alt="Google reviews for Main Street Pizza" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5ReviewsOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/Phone_GMB_Map.jpg" alt="Google Maps directions to Main Street Pizza" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5MapOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/Phone_GMB_ListingBad.jpg" alt="A neglected Google Business Profile" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5BadOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/Phone_GMB_Listing.jpg" alt="A polished Google Business Profile" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5GoodOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Listing.jpg" alt="Main Street Pizza listing with Call and Directions" style="display:block;width:100%;height:auto;border-radius:16px;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Reviews.jpg" alt="Google reviews for Main Street Pizza" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5ReviewsOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Map.jpg" alt="Google Maps directions to Main Street Pizza" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5MapOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_ListingBad.jpg" alt="A neglected Google Business Profile" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5BadOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Listing.jpg" alt="A polished Google Business Profile" style="position:absolute;inset:0;width:100%;height:auto;border-radius:16px;opacity:{{ s5GoodOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <sc-if value="{{ s5PhaseA }}" hint-placeholder-val="{{ true }}">
@@ -5572,7 +5581,7 @@
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player6.pct }};"></div></div>
             
           </div>
-          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img src="uploads/gbp-logo-ce280f7a.png" alt="Google Business Profile" style="height:69px;width:auto;display:block;"></div>
+          <div style="display:flex;justify-content:center;margin:0 0 20px;"><img loading="lazy" decoding="async" src="uploads/gbp-logo-ce280f7a.jpg" alt="Google Business Profile" style="height:69px;width:auto;display:block;"></div>
           <div style="{{ rv.s6head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three parts, one more time.</h2></div>
           <div style="display:flex;flex-wrap:wrap;gap:14px;animation:dhGroupIn 700ms cubic-bezier(0.22,1,0.36,1) 300ms both;">
             <div style="flex:1 1 200px;display:flex;"><div style="{{ rv.s6r1 }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;height:100%;box-sizing:border-box;">
@@ -5608,9 +5617,9 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;">
-              <img src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
               <div style="position:absolute;top:30.4%;left:19%;width:56%;height:3.4%;display:flex;align-items:center;font-size:10px;color:#202124;font-family:var(--font-sans);white-space:nowrap;overflow:hidden;opacity:{{ e0QueryOpacity }};">{{ e0typed }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;animation:dhCaret 1s step-end infinite;"></span></div>
-              <img src="uploads/Phone_SEO_Result.jpg" alt="Google results with an AI Overview on top and organic listings below" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ e0ResultOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_Result.jpg" alt="Google results with an AI Overview on top and organic listings below" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ e0ResultOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <div style="{{ rv.e0head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Be the business that comes up when someone asks.</h2></div>
@@ -5632,9 +5641,9 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;">
-              <img src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_Search.jpg" alt="Google search on a phone" style="display:block;width:100%;height:auto;">
               <div style="position:absolute;top:30.4%;left:19%;width:56%;height:3.4%;display:flex;align-items:center;font-size:10px;color:#202124;font-family:var(--font-sans);white-space:nowrap;overflow:hidden;opacity:{{ e1QueryOpacity }};">{{ e1typed }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;animation:dhCaret 1s step-end infinite;"></span></div>
-              <img src="uploads/Phone_SEO_ResultList.jpg" alt="Google results listing local roofing contractors" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ e1ResultOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_ResultList.jpg" alt="Google results listing local roofing contractors" style="position:absolute;inset:0;width:100%;height:auto;opacity:{{ e1ResultOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <div style="{{ rv.e1head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">You stop renting attention — and start earning it.</h2></div>
@@ -5657,15 +5666,15 @@
           <div style="{{ rv.e2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Anyone who researches before they buy.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.e2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/roof.jpg" alt="New shingle roof" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/roof.jpg" alt="New shingle roof" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Big-ticket service</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Roofers, HVAC, remodelers, med spas. Nobody spends $8,000 on a whim — they research for days, and every day is a search.</div></div>
               </div></div>
               <div style="{{ rv.e2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/attorney.jpg" alt="Attorney at a desk" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/attorney.jpg" alt="Attorney at a desk" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Question-first businesses</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Attorneys, dentists, insurance, financial. Every question can be its own page — and every page is another door in.</div></div>
               </div></div>
               <div style="{{ rv.e2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/clinic.jpg" alt="Medical clinic building" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/clinic.jpg" alt="Medical clinic building" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Multi-service / multi-location</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Clinics, dealerships, contractors. Each service and each town gets its own page — many ways to get found.</div></div>
               </div></div>
           </div>
@@ -5740,9 +5749,9 @@
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;aspect-ratio:1286 / 2505;border-radius:16px;overflow:hidden;">
               <video ref="{{ muteVideo }}" src="uploads/seo-3.mp4" autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
-              <img src="uploads/Phone_SEO_CityvilleRoofing.jpg" alt="A polished roofing website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ e5GoodOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/Phone_SEO_CityvilleRoofingBad.jpg" alt="A neglected one-page roofing website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ e5BadOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/Phone_SEO_CityvilleRoofingFAQ.jpg" alt="The roofing site's plain-English FAQ" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ e5FaqOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_CityvilleRoofing.jpg" alt="A polished roofing website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ e5GoodOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_CityvilleRoofingBad.jpg" alt="A neglected one-page roofing website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ e5BadOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_CityvilleRoofingFAQ.jpg" alt="The roofing site's plain-English FAQ" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ e5FaqOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <sc-if value="{{ e5PhaseA }}" hint-placeholder-val="{{ true }}">
@@ -5804,10 +5813,10 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:28px;">
             <div style="position:relative;width:100%;max-width:678px;margin:0 auto;aspect-ratio:1600 / 988;border-radius:12px;overflow:hidden;background:#fff;">
-              <img src="uploads/Google-Search.jpg" alt="Google search on a laptop" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;">
+              <img loading="lazy" decoding="async" src="uploads/Google-Search.jpg" alt="Google search on a laptop" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;">
               <div style="position:absolute;top:41.2%;left:32%;width:31%;height:4%;display:flex;align-items:center;font-size:11px;color:#202124;font-family:var(--font-sans);white-space:nowrap;overflow:hidden;opacity:{{ l0QueryOpacity }};">{{ l0typed }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;animation:dhCaret 1s step-end infinite;"></span></div>
-              <img src="uploads/TLP-FloodSearch.jpg" alt="Search results for flood insurance in Springfield" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ l0ResultOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/TLP-Flood.jpg" alt="A landing page built for flood insurance in Springfield" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ l0LandOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/TLP-FloodSearch.jpg" alt="Search results for flood insurance in Springfield" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ l0ResultOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/TLP-Flood.jpg" alt="A landing page built for flood insurance in Springfield" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ l0LandOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="max-width:760px;margin:0 auto;">
               <div style="{{ rv.l0head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Built for the exact thing they searched.</h2></div>
@@ -5850,15 +5859,15 @@
           <div style="{{ rv.l2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">If it splits into pieces, each piece gets a page.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.l2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/hvac.jpg" alt="HVAC technician" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/hvac.jpg" alt="HVAC technician" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Serve a bunch of towns</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Plumbers, HVAC, electricians, roofers, insurance, attorneys — anybody with a driving radius. The gap between office and range is the opportunity.</div></div>
               </div></div>
               <div style="{{ rv.l2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/roof.jpg" alt="Roofer at work" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/roof.jpg" alt="Roofer at work" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Several distinct services</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Insurance selling flood, fire, life, auto. A clinic with four treatments. Each is a different search by a different person — all crammed onto one page today.</div></div>
               </div></div>
               <div style="{{ rv.l2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/town.jpg" alt="A small town" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/town.jpg" alt="A small town" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Office in the wrong town</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">A shop ten minutes outside the bigger market loses every search to the folks inside it. A page built for that town gets them in the conversation.</div></div>
               </div></div>
           </div>
@@ -5930,9 +5939,9 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;aspect-ratio:9/16;border-radius:16px;overflow:hidden;">
-              <img src="uploads/tlp6a.jpg" alt="A page for each service in Springfield" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;">
-              <img src="uploads/tlp-before.jpg" alt="One generic Our Services page" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:{{ l5BeforeOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/tlp6b.jpg" alt="And a page for each service in Franklin too" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:{{ l5FaqOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tlp6a.jpg" alt="A page for each service in Springfield" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;">
+              <img loading="lazy" decoding="async" src="uploads/tlp-before.jpg" alt="One generic Our Services page" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:{{ l5BeforeOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tlp6b.jpg" alt="And a page for each service in Franklin too" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:{{ l5FaqOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <sc-if value="{{ l5PhaseA }}" hint-placeholder-val="{{ true }}">
@@ -5992,10 +6001,10 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="position:relative;flex:none;width:240px;max-width:100%;height:520px;">
-              <img src="uploads/Phone_GMB_Blank.png" alt="An empty Google search on a phone" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_GMB_Blank.png" alt="An empty Google search on a phone" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;">
               <div style="position:absolute;top:170px;left:45px;font-size:11px;line-height:1;color:#202124;font-family:var(--font-sans);white-space:nowrap;opacity:{{ w0SearchOpacity }};">{{ w0typed }}<span style="display:inline-block;width:1.5px;height:1.1em;background:#202124;margin-left:1px;vertical-align:-2px;animation:dhCaret 1s step-end infinite;"></span></div>
-              <img src="uploads/Phone_Website-Bad.jpg" alt="A rough, out-of-date small-business website on a phone" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ w0BadOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/Phone_Website-facebook.jpg" alt="A business social page being used as a website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ w0FbOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_Website-Bad.jpg" alt="A rough, out-of-date small-business website on a phone" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ w0BadOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_Website-facebook.jpg" alt="A business social page being used as a website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ w0FbOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <div style="{{ rv.w0head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">The one piece of the internet a business actually owns.</h2></div>
@@ -6051,15 +6060,15 @@
           <div style="{{ rv.w2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three easy ones &mdash; the first you&rsquo;ll spot without trying.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.w2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/web-who-1.jpg" alt="A dated do-it-yourself business website" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/web-who-1.jpg" alt="A dated do-it-yourself business website" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Old, broken, or nonexistent</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">The one their nephew built in college &mdash; or just a Facebook page with nothing behind it. The pain already exists; be kind about it. You&rsquo;re adding the piece they own, not replacing the one they like.</div></div>
               </div></div>
               <div style="{{ rv.w2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/radio.jpg" alt="A business already running advertising" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/radio.jpg" alt="A business already running advertising" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Already advertising anywhere</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Radio, search, listings, social, print. If they&rsquo;re paying to send people somewhere, the somewhere matters. This is your bucket-with-holes conversation &mdash; the most natural add-on in the catalog.</div></div>
               </div></div>
               <div style="{{ rv.w2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/attorney.jpg" alt="An attorney whose clients are worth real money" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/attorney.jpg" alt="An attorney whose clients are worth real money" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">One customer worth real money</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Contractors, clinics, dealerships, attorneys. When one job is worth thousands, a site that turns even a handful more visitors into calls is not a hard case to make.</div></div>
               </div></div>
           </div>
@@ -6129,10 +6138,10 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;height:470px;border-radius:16px;overflow:hidden;background:var(--gray-50);">
-              <img src="uploads/web6a-7d771277.jpg" alt="The current site before the rebuild" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
-              <img src="uploads/Phone_SEO_eliteBad.jpg" alt="The before: a dated, cluttered site on a phone" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ w5BeforeOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/elite-after1.jpg" alt="The after: a fast, clean, thumb-friendly site" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ w5AfterOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/website-after-chat.jpg" alt="The after with an AI chatbot answering a question" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ w5ChatOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/web6a-7d771277.jpg" alt="The current site before the rebuild" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+              <img loading="lazy" decoding="async" src="uploads/Phone_SEO_eliteBad.jpg" alt="The before: a dated, cluttered site on a phone" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ w5BeforeOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/elite-after1.jpg" alt="The after: a fast, clean, thumb-friendly site" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ w5AfterOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/website-after-chat.jpg" alt="The after with an AI chatbot answering a question" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ w5ChatOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <sc-if value="{{ w5PhaseA }}" hint-placeholder-val="{{ true }}">
@@ -6242,15 +6251,15 @@
           <div style="{{ rv.c2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three easy targets.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.c2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified (2)/fitness.jpg" alt="A gym where the same questions come in constantly" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified (2)/fitness.jpg" alt="A gym where the same questions come in constantly" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">The same questions, constantly</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Studios, gyms, salons, clinics, daycares, trades. What ages, what hours, what&rsquo;s it cost, do you service my area. Predictable, answerable &mdash; and answering them at midnight costs nothing.</div></div>
               </div></div>
               <div style="{{ rv.c2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified (2)/roofer.jpg" alt="A roofer on the job \u2014 nobody at a desk" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified (2)/roofer.jpg" alt="A roofer on the job \u2014 nobody at a desk" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Nobody&rsquo;s at a desk</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Contractors, mobile services, one-person operations &mdash; anybody whose &ldquo;office&rdquo; is a truck. They miss inquiries all day, not just at night, and they know it.</div></div>
               </div></div>
               <div style="{{ rv.c2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified (2)/dental.jpg" alt="A dental patient \u2014 customers who research privately" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified (2)/dental.jpg" alt="A dental patient \u2014 customers who research privately" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Customers who research privately</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Medical, dental, legal, financial. People look into those alone, at night &mdash; and would often rather type a question than call and talk to somebody.</div></div>
               </div></div>
           </div>
@@ -6319,10 +6328,10 @@
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:none;width:220px;max-width:100%;position:relative;height:470px;border-radius:16px;overflow:hidden;background:var(--gray-50);">
-              <img src="uploads/chat-6.jpg" alt="A friendly agent with a headset, ready to answer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
-              <img src="uploads/tinified (2)/chat-6a.jpg" alt="A young student at the martial arts school" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ c5StudioOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/tinified (2)/chat-6before.jpg" alt="The before: the school's site with no way to ask a question" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ c5BeforeOpacity }};transition:opacity 550ms ease;">
-              <img src="uploads/tinified (2)/chat-6after.jpg" alt="The after: the chat window answering in seconds" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ c5AfterOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/chat-6.jpg" alt="A friendly agent with a headset, ready to answer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+              <img loading="lazy" decoding="async" src="uploads/tinified (2)/chat-6a.jpg" alt="A young student at the martial arts school" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ c5StudioOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified (2)/chat-6before.jpg" alt="The before: the school's site with no way to ask a question" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ c5BeforeOpacity }};transition:opacity 550ms ease;">
+              <img loading="lazy" decoding="async" src="uploads/tinified (2)/chat-6after.jpg" alt="The after: the chat window answering in seconds" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:{{ c5AfterOpacity }};transition:opacity 550ms ease;">
             </div>
             <div style="flex:1;min-width:300px;">
               <sc-if value="{{ c5PhaseA }}" hint-placeholder-val="{{ true }}">
@@ -6436,15 +6445,15 @@
           <div style="{{ rv.a2head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Three easy ones &mdash; you&rsquo;re describing their waiting room.</h2></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
               <div style="{{ rv.a2a }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified (2)/optometrist.jpg" alt="An optometrist fitting glasses on an older patient" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified (2)/optometrist.jpg" alt="An optometrist fitting glasses on an older patient" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Customers who are mostly older</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Pharmacies, hearing and vision clinics, senior services, medical practices, financial advisors. Barely a pitch &mdash; you&rsquo;re not describing a hypothetical person, you&rsquo;re describing the people in their waiting room.</div></div>
               </div></div>
               <div style="{{ rv.a2b }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified (2)/online-form.jpg" alt="Someone filling out an online form on a laptop" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified (2)/online-form.jpg" alt="Someone filling out an online form on a laptop" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Anybody who transacts online</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Ordering, booking, forms, payments. A barrier there isn&rsquo;t an inconvenience &mdash; it&rsquo;s a dead transaction. These also draw the most legal attention, because the website <em>is</em> how business gets done.</div></div>
               </div></div>
               <div style="{{ rv.a2c }}"><div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:100%;">
-                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img src="uploads/tinified (2)/clinic.jpg" alt="A public-facing urgent-care medical building" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+                <div style="position:relative;width:100%;aspect-ratio:16/10;border-bottom:1px solid var(--gray-100);overflow:hidden;"><img loading="lazy" decoding="async" src="uploads/tinified (2)/clinic.jpg" alt="A public-facing urgent-care medical building" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
                 <div style="padding:16px 18px;"><div style="font-size:15px;font-weight:700;margin-bottom:5px;">Held to a higher standard</div><div style="font-size:14px;line-height:1.5;color:var(--gray-600);">Healthcare, hospitality, education, anybody doing government work, franchises and multi-location operations. Bigger and more visible means more exposure.</div></div>
               </div></div>
           </div>
@@ -6492,7 +6501,7 @@
             <div style="flex:1;height:5px;border-radius:9999px;background:var(--gray-200);overflow:hidden;"><div style="height:100%;border-radius:9999px;background:var(--brand-blue);transition:width 200ms linear;width:{{ player4.pct }};"></div></div>
           </div>
           <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;">
-            <img src="uploads/tinified (2)/terms.jpg" alt="A website accessibility panel open on a phone, showing text size, contrast, and magnifier controls" style="flex:none;width:240px;max-width:100%;height:520px;object-fit:cover;object-position:center top;border-radius:16px;display:block;">
+            <img loading="lazy" decoding="async" src="uploads/tinified (2)/terms.jpg" alt="A website accessibility panel open on a phone, showing text size, contrast, and magnifier controls" style="flex:none;width:240px;max-width:100%;height:520px;object-fit:cover;object-position:center top;border-radius:16px;display:block;">
             <div style="flex:1;min-width:300px;">
               <div style="{{ rv.a4head }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">Five terms &mdash; two are acronyms they&rsquo;ll say first.</h2></div>
               <div style="{{ rv.a4t1 }}"><div style="display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--gray-100);"><div style="flex:none;min-width:150px;font-size:15px;font-weight:700;">Accessibility</div><div style="flex:1;font-size:15px;line-height:1.55;color:var(--gray-600);">Building a site so people with disabilities can use it: readable, navigable without a mouse, understandable to the software they rely on.</div></div></div>
@@ -6538,9 +6547,9 @@
           <sc-if value="{{ a5PhaseB }}" hint-placeholder-val="{{ false }}">
               <div style="{{ rv.a5phead }}"><h2 style="font-size:26px;font-weight:700;letter-spacing:-0.01em;margin:0 0 16px;line-height:1.15;">The hearing clinic &mdash; before &amp; after.</h2></div>
               <div style="position:relative;width:100%;height:420px;overflow:hidden;margin:0 0 22px;">
-                <img src="uploads/tinified (2)/ADA-before.jpg" alt="Before: the clinic website with small gray type and no accessibility panel" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ a5ImgBeforeOp }};transition:opacity 550ms ease;">
-                <img src="uploads/tinified (2)/ADA-after1.jpg" alt="After: the accessibility panel open, text stepped up and high contrast" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ a5ImgAfter1Op }};transition:opacity 550ms ease;">
-                <img src="uploads/tinified (2)/ADA-after2.jpg" alt="After: the accessibility button live on the clinic website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ a5ImgAfter2Op }};transition:opacity 550ms ease;">
+                <img loading="lazy" decoding="async" src="uploads/tinified (2)/ADA-before.jpg" alt="Before: the clinic website with small gray type and no accessibility panel" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ a5ImgBeforeOp }};transition:opacity 550ms ease;">
+                <img loading="lazy" decoding="async" src="uploads/tinified (2)/ADA-after1.jpg" alt="After: the accessibility panel open, text stepped up and high contrast" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ a5ImgAfter1Op }};transition:opacity 550ms ease;">
+                <img loading="lazy" decoding="async" src="uploads/tinified (2)/ADA-after2.jpg" alt="After: the accessibility button live on the clinic website" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:{{ a5ImgAfter2Op }};transition:opacity 550ms ease;">
                 <div style="position:absolute;top:14px;left:14px;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:6px 14px;border-radius:9999px;background:var(--gray-700);color:#fff;opacity:{{ a5BeforeOpacity }};transition:opacity 300ms ease;">Before</div>
                 <div style="position:absolute;top:14px;left:14px;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:6px 14px;border-radius:9999px;background:var(--accent-green-deep);color:#fff;opacity:{{ a5AfterOpacity }};transition:opacity 300ms ease;">After</div>
               </div>
@@ -6636,7 +6645,7 @@
   </sc-if>
 
 </div>
-</x-dc>
+</template></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;passThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:100,&quot;min&quot;:50,&quot;max&quot;:100,&quot;step&quot;:5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Certification&quot;},&quot;userName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sally Sales&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;userGroup&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;CF Digital&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;draftVoice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsKey&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;21m00Tcm4TlvDq8ikWAM&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice2&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;EXAVITQu4vr4xnSDxMaL&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice3&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;UgBBYS2sOqTuMpoF3BR0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceMale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;nPczCjzI2devNBz1zQrb&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceFemale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;cgSgspJ2msm6clMCkdW9&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;}}">
 class Component extends DCLogic {
   state = { view: 'hub', activeModule: 'gbp', answers: {}, submitted: false, postReview: false, progress: {}, moduleStep: 0, narrDone: {}, voiceOn: true, playingStep: null, paused: false, narrProgress: 0, reviewQueue: null, reviewPos: 0, openLists: {}, typedQuery: '', phoneMapped: false, phoneBoxed: false, s0Title: false, s0P1: false, s0P2: false, s0P3: false, rev: {}, chk: {}, s3box: false, s3listing: false, s5reviews: false, s5map: false, s5bad: false, s5good: false, s5phaseB: false, e5phaseB: false, e0typed: '', e0result: false, e1typed: '', e1result: false, e5showBad: false, e5showFaq: false, em5phaseB: false };
@@ -8570,7 +8579,7 @@ class Component extends DCLogic {
     }
   }
 
-  componentWillUnmount() { this.cancelSpeech(); if (this._onKey) window.removeEventListener('keydown', this._onKey); }
+  componentWillUnmount() { this.cancelSpeech(); if (this._onKey) window.removeEventListener('keydown', this._onKey); if (this._prefetchEl) { this._prefetchEl.removeAttribute('src'); this._prefetchEl.remove(); this._prefetchEl = null; } }
 
   scrollToStep(step) {
     setTimeout(() => {
@@ -8765,6 +8774,7 @@ class Component extends DCLogic {
         overlays.forEach((o) => { o.classList.add('out'); setTimeout(() => o.remove(), 260); });
         if (this.state.mediaLoading === i) this.setState({ mediaLoading: null });
         if (this._gateCancel === finish) this._gateCancel = null;
+        this.prefetchNext(i);
         resolve();
       };
       const check = () => { if (this._speakSession !== session || waiting.every(canPlay)) finish(); };
@@ -8784,6 +8794,32 @@ class Component extends DCLogic {
       // The step's DOM may commit a frame after narrate() is called.
       if (this.stepVideos(i).length) start(); else requestAnimationFrame(() => requestAnimationFrame(start));
     });
+  }
+  // While section i plays, warm the browser's media cache with the next section's video through a
+  // hidden, muted <video preload="auto">, so the next "Loading video…" pause is short or absent.
+  // Which video belongs to which section comes from the course manifest (window.__PORTAL.step_videos).
+  prefetchNext(i) {
+    try {
+      const perStep = ((window.__PORTAL && window.__PORTAL.step_videos) || {})[this.state.activeModule];
+      if (!perStep) return;
+      let next = null;
+      for (let j = i + 1; j < perStep.length && !next; j++) if (perStep[j] && perStep[j].length) next = perStep[j][0];
+      if (!next) return;
+      const replaced = (window.__PORTAL.overrides && window.__PORTAL.overrides.videos) || {};
+      next = replaced[next] || next;
+      if (this._prefetchSrc === next) return;
+      this._prefetchSrc = next;
+      let v = this._prefetchEl;
+      if (!v) {
+        v = document.createElement('video');
+        v.muted = true; v.preload = 'auto'; v.tabIndex = -1; v.setAttribute('aria-hidden', 'true');
+        v.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+        document.body.appendChild(v);
+        this._prefetchEl = v;
+      }
+      v.src = next;
+      v.load();
+    } catch (e) { /* prefetching is best-effort */ }
   }
   showVideoLoader(v) {
     const el = document.createElement('div');

@@ -111,6 +111,32 @@ for (const id of procOrder) {
   videosByCourse[id] = uniq((JSON.stringify(data).match(VIDEO_RE) || []).map((s) => s.replace(/\\\//g, '/')));
 }
 
+// ---- 4b. Videos per section (step) ----------------------------------------
+// The portal warms up the next section's video while the current one plays, so it
+// needs to know which video belongs to which step. Template modules: <video src>
+// inside each id="…-step-N" container of the module's block. Process blocks p2+:
+// the media entry of each segment in processContent().
+const stepVideosByCourse = {};
+for (const [flag, id] of Object.entries(flagToId)) {
+  const block = blockFor(flag);
+  const marks = [...block.matchAll(/<div\b[^>]*\bid="[a-z0-9]+-step-(\d+)"/g)];
+  if (!marks.length) continue;
+  const perStep = [];
+  marks.forEach((m, k) => {
+    const chunk = block.slice(m.index, k + 1 < marks.length ? marks[k + 1].index : block.length);
+    const srcs = uniq([...chunk.matchAll(/<video\b[^>]*\bsrc="([^"{}]+)"/g)].map((x) => decodeURIComponent(x[1])));
+    if (srcs.length) perStep[Number(m[1])] = srcs;
+  });
+  if (perStep.some(Boolean)) stepVideosByCourse[id] = Array.from(perStep, (x) => x || []);
+}
+for (const id of procOrder) {
+  if (stepVideosByCourse[id]) continue;
+  const data = processContent[id];
+  if (!data || !Array.isArray(data.segs)) continue;
+  const perStep = data.segs.map((seg) => uniq((JSON.stringify(seg).match(VIDEO_RE) || []).map((s) => s.replace(/\\\//g, '/'))));
+  if (perStep.some((x) => x.length)) stepVideosByCourse[id] = perStep;
+}
+
 // ---- 5. Quiz per course ----------------------------------------------------
 function quizFor(id) {
   c.state = { ...c.state, activeModule: id };
@@ -132,6 +158,7 @@ function stepsFor(id) {
 
 for (const course of courses) {
   course.videos = (videosByCourse[course.id] || []).map((src) => ({ src }));
+  course.stepVideos = stepVideosByCourse[course.id] || [];
   course.steps = stepsFor(course.id);
   course.quiz = quizFor(course.id);
   course.type = course.videos.length > 0 ? 'video' : 'interactive';

@@ -81,7 +81,7 @@ switch ($action) {
         if (!valid_email($to)) fail('Enter a valid email address to send the test to.');
         $title = (string)setting_get('portal_title', 'Digital Certification');
         $text = "This is a test message from the $title admin panel. If you can read this, Mailgun is set up correctly.\n\nSent " . now() . " for " . site_url();
-        $html = '<p style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#2b4863">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</p>';
+        $html = mail_layout($title, '<p style="font-size:15px;line-height:1.55;margin:0;white-space:pre-line">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</p>');
         $r = mail_send($to, display_name($actor), 'Test email from ' . $title, $text, $html);
         audit((int)$actor['id'], 'settings.test_mail', $to, ['sent' => $r['ok'], 'error' => $r['ok'] ? null : $r['error']]);
         if (!$r['ok']) fail($r['error'], 502, ['code' => 'mail_failed']);

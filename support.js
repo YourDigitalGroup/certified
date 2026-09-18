@@ -28,19 +28,25 @@
     const { props, preview } = parseDataProps(
       scriptEl?.getAttribute("data-props") ?? null
     );
+    // The page may keep the template inert inside <x-dc><template>…</template></x-dc> so the
+    // browser does not fetch its media at parse time; read through the wrapper when present.
+    const inert = dc.querySelector(":scope > template");
     return {
-      template: dc.innerHTML,
+      template: inert ? inert.innerHTML : dc.innerHTML,
       js: scriptEl ? scriptEl.textContent || "" : "",
       props,
       preview
     };
+  }
+  function unwrapTemplate(t) {
+    return t.replace(/^\s*<template>/i, "").replace(/<\/template>\s*$/i, "");
   }
   function parseDcText(src) {
     const openMatch = /<x-dc(?:\s[^>]*)?>/.exec(src);
     if (!openMatch) return null;
     const close = src.lastIndexOf("</x-dc>");
     if (close === -1 || close < openMatch.index) return null;
-    const template = src.slice(openMatch.index + openMatch[0].length, close);
+    const template = unwrapTemplate(src.slice(openMatch.index + openMatch[0].length, close));
     const doc = new DOMParser().parseFromString(src, "text/html");
     const scriptEl = doc.querySelector("script[data-dc-script]");
     const { props, preview } = parseDataProps(

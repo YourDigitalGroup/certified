@@ -79,6 +79,12 @@
     onReady(function () { scan(document.body); });
   }
 
+  // support.js normally pulls React from unpkg.com and re-downloads this whole page to re-read
+  // the template. Pointing it at local copies skips both; index.html preloads these files.
+  window.__resources = window.__resources || {};
+  window.__resources['https://unpkg.com/react@18.3.1/umd/react.production.min.js'] = 'vendor/react.production.min.js';
+  window.__resources['https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js'] = 'vendor/react-dom.production.min.js';
+
   function loadApp() {
     var s = document.createElement('script');
     s.src = 'support.js';

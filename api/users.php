@@ -243,9 +243,13 @@ switch ($action) {
         if (!is_array($rows) || count($rows) === 0) fail('No rows to import.');
         if (count($rows) > 5000) fail('Import at most 5000 rows at a time.');
         $mode = in_str($d, 'mode', 'upsert') === 'skip' ? 'skip' : 'upsert';
+        // replace_progress: for every person in the file, drop passes that came from earlier imports or
+        // trainer marks before recording the file's "completed" list. Passes earned in the portal's own
+        // quizzes are never touched, so a re-import can correct manual mistakes without losing real work.
+        $replaceProgress = in_bool($d, 'replace_progress', false);
         $assignable = assignable_roles($actor);
         $pdo = db();
-        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0;
+        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0; $progressReset = 0;
         $pdo->beginTransaction();
         try {
             foreach ($rows as $i => $row) {
@@ -300,6 +304,10 @@ switch ($action) {
                     $uid = (int)$pdo->lastInsertId();
                     $created++;
                 }
+                if ($replaceProgress && array_key_exists('completed', $row)) {
+                    $pdo->prepare("DELETE FROM completions WHERE user_id = ? AND method <> 'quiz'")->execute([$uid]);
+                    $progressReset += (int)$pdo->query('SELECT changes()')->fetchColumn();
+                }
                 // Optional "completed" column: course ids or titles separated by | ; , — each may carry
                 // the date it was passed as "id@2026-05-22" (or any date strtotime understands).
                 $completed = $row['completed'] ?? '';
@@ -321,8 +329,8 @@ switch ($action) {
             $pdo->rollBack();
             throw $e;
         }
-        audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors)]);
-        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'groups_created' => $groupsCreated, 'errors' => array_slice($errors, 0, 200)]);
+        audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors), 'progress_reset' => $progressReset, 'completions_added' => $completionsAdded]);
+        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'progress_reset' => $progressReset, 'groups_created' => $groupsCreated, 'errors' => array_slice($errors, 0, 200)]);
 
     default:
         fail('Unknown action', 404);

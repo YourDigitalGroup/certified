@@ -67,5 +67,20 @@ define('DEFAULT_GROUPS', [
 // restrict it to specific super admin accounts; an empty array allows every super admin.
 define('IMPERSONATE_ALLOWED_EMAILS', ['scott@44interactive.com']);
 
+// Email. Mailgun credentials (sending domain, API key, From address) are entered by the super admin
+// under Admin → Settings → Email and stored in the database — nothing to edit here for normal use.
+// MAIL_DRIVER 'mailgun' sends for real; 'log' appends each message to data/tmp/mail.log instead
+// (local development and tests). The environment variable PORTAL_MAIL_DRIVER overrides it.
+define('MAIL_DRIVER', getenv('PORTAL_MAIL_DRIVER') !== false && getenv('PORTAL_MAIL_DRIVER') !== '' ? (string)getenv('PORTAL_MAIL_DRIVER') : 'mailgun');
+define('MAIL_LOG_FILE', TMP_DIR . '/mail.log');
+// Public address of the portal folder used in emailed links, e.g. https://certified.44i.com/ .
+// Normally left empty: the super admin sets it under Settings → Email, or it is detected from the request.
+define('PORTAL_BASE_URL', getenv('PORTAL_BASE_URL') !== false ? (string)getenv('PORTAL_BASE_URL') : '');
+// One-time password links (forgot password, first sign-in): how long they stay valid, and how many
+// one address or one connection may request per window. Links sent by staff are not limited.
+define('RESET_LINK_TTL', 60 * 60);
+define('RESET_MAX_PER_EMAIL', 3);
+define('RESET_MAX_PER_IP', 10);
+
 // Set true temporarily to include exception messages in API error responses.
 define('DEBUG', false);

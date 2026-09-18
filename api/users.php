@@ -8,6 +8,7 @@
 //   POST ?action=create                    admin+
 //   POST ?action=update                    admin+
 //   POST ?action=set_password              admin+     {id, password | clear:true, require_change}
+//   POST ?action=send_reset                trainer+   {id}   email a one-time link to set / reset the password
 //   POST ?action=delete                    admin+
 //   POST ?action=import                    admin+     {rows:[...], mode:'upsert'|'skip'}
 
@@ -146,7 +147,18 @@ switch ($action) {
             $role, $hash, $requireChange ? 1 : 0, $ts, $ts, $actor['id']]);
         $id = (int)db()->lastInsertId();
         audit((int)$actor['id'], 'users.create', $email, ['role' => $role, 'passwordless' => $hash === null]);
-        respond(['user' => user_public(fetch_user($id))], 201);
+        // Optionally invite them straight away with a one-time link to choose their password.
+        $welcome = null;
+        if ($hash === null && in_bool($d, 'send_welcome', false)) {
+            $welcome = mail_configured()
+                ? send_password_link(fetch_user($id), 'welcome', client_ip(), (int)$actor['id'])
+                : ['ok' => false, 'error' => 'Email is not set up yet (Settings → Email).'];
+        }
+        respond([
+            'user' => user_public(fetch_user($id)),
+            'welcome_sent' => (bool)($welcome && $welcome['ok']),
+            'welcome_error' => ($welcome && !$welcome['ok']) ? $welcome['error'] : null,
+        ], 201);
 
     case 'update':
         require_post();
@@ -196,6 +208,20 @@ switch ($action) {
             ->execute([password_hash($password, PASSWORD_DEFAULT), $requireChange ? 1 : 0, now(), $t['id']]);
         audit((int)$actor['id'], 'users.set_password', $t['email'], ['require_change' => $requireChange]);
         respond(['user' => user_public(fetch_user((int)$t['id']))]);
+
+    case 'send_reset':
+        // Email the person a one-time link to set (no password yet) or reset their password.
+        require_post();
+        $actor = require_role('trainer');
+        require_csrf();
+        $t = fetch_user((int)in_int(input(), 'id', 0));
+        if (!$t) fail('User not found', 404);
+        if ((int)$t['active'] !== 1) fail('That account is deactivated. Activate it first.');
+        if (!mail_configured()) fail('Email is not set up yet. A super admin can add the Mailgun details under Settings → Email.', 503, ['code' => 'mail_unavailable']);
+        $purpose = empty($t['password_hash']) ? 'welcome' : 'reset';
+        $r = send_password_link($t, $purpose, client_ip(), (int)$actor['id']);
+        if (!$r['ok']) fail($r['error'], 502, ['code' => 'mail_failed']);
+        respond(['status' => 'sent', 'to' => $t['email'], 'purpose' => $purpose]);
 
     case 'delete':
         require_post();

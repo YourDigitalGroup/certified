@@ -75,7 +75,7 @@
     <form id="f-login" autocomplete="on" novalidate>
       <div class="eyebrow">Welcome</div>
       <h1>Sign in to your training.</h1>
-      <p class="lede">Use the email your trainer or administrator added. If you have not set a password yet, leave that field blank and we will help you create one.</p>
+      <p class="lede" id="login-lede">Use the email your trainer or administrator added. If you have not set a password yet, leave that field blank and we will help you create one.</p>
       <div class="field">
         <label for="login-email">Email</label>
         <input id="login-email" name="email" type="email" inputmode="email" autocomplete="username" required autofocus placeholder="you@yourstation.com">
@@ -88,7 +88,51 @@
         </div>
       </div>
       <button class="btn" type="submit" id="login-submit">Continue →</button>
-      <div class="foot">Trouble signing in? Ask your trainer or administrator to check your account.</div>
+      <div class="foot"><button type="button" class="link hidden" id="login-forgot">Forgot your password?</button><span id="login-foot-sep" class="hidden"> · </span>Trouble signing in? Ask your trainer or administrator to check your account.</div>
+    </form>
+
+    <!-- Mode: forgot password (email a one-time link) -->
+    <form id="f-forgot" class="hidden" autocomplete="on" novalidate>
+      <div class="eyebrow">Password help</div>
+      <h1>Reset your password.</h1>
+      <p class="lede">Enter the email on your account and we will send you a link to choose a new password. The link works once and expires after an hour.</p>
+      <div class="field">
+        <label for="forgot-email">Email</label>
+        <input id="forgot-email" type="email" inputmode="email" autocomplete="username" required placeholder="you@yourstation.com">
+      </div>
+      <button class="btn" type="submit" id="forgot-submit">Email me a link →</button>
+      <button class="btn secondary" type="button" id="forgot-back">Back to sign in</button>
+    </form>
+
+    <!-- Mode: link sent -->
+    <div id="f-sent" class="hidden">
+      <div class="eyebrow">Check your email</div>
+      <h1>Your link is on its way.</h1>
+      <p class="lede">If there is an account for <strong id="sent-email"></strong>, we have emailed it a link to set your password. The link works once and expires after an hour.</p>
+      <p class="hint" style="margin:0 0 20px">Nothing after a minute or two? Check your spam folder, make sure this is the address your trainer added, or <button type="button" class="link" id="sent-again">send another link</button>.</p>
+      <button class="btn secondary" type="button" id="sent-back" style="margin-top:0">Back to sign in</button>
+    </div>
+
+    <!-- Mode: set / reset password from an emailed link -->
+    <form id="f-reset" class="hidden" autocomplete="on" novalidate>
+      <div class="eyebrow" id="reset-eyebrow">Password reset</div>
+      <h1 id="reset-title">Choose a new password.</h1>
+      <p class="lede" id="reset-lede">Pick a new password for your account. At least 8 characters.</p>
+      <div class="who"><div class="avatar" id="reset-avatar">?</div><div><div class="name" id="reset-name"></div><div class="email" id="reset-email"></div></div></div>
+      <input type="hidden" name="email" id="reset-email-field" autocomplete="username">
+      <div class="field">
+        <label for="reset-password">New password</label>
+        <div class="pw-wrap">
+          <input id="reset-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required>
+          <button type="button" class="pw-toggle" aria-label="Show password">Show</button>
+        </div>
+        <div class="strength"><div id="reset-strength"></div></div>
+      </div>
+      <div class="field">
+        <label for="reset-confirm">Confirm password</label>
+        <input id="reset-confirm" type="password" autocomplete="new-password" minlength="8" required>
+      </div>
+      <button class="btn" type="submit" id="reset-submit">Save password and sign in →</button>
     </form>
 
     <!-- Mode: create password (first sign-in without one) -->
@@ -150,6 +194,8 @@
   var API = 'api/';
   var qs = new URLSearchParams(location.search);
   var mode = qs.get('mode') || 'login';
+  var resetToken = qs.get('token') || '';   // one-time token from an emailed link (mode=reset)
+  var mailEnabled = false;                  // set from the health check: can the server email links?
   var session = null; // {user, csrf} once signed in
 
   // Only allow same-site, relative destinations.
@@ -162,7 +208,7 @@
   }
 
   var $ = function (id) { return document.getElementById(id); };
-  var forms = { login: $('f-login'), create: $('f-create'), change: $('f-change') };
+  var forms = { login: $('f-login'), create: $('f-create'), change: $('f-change'), forgot: $('f-forgot'), sent: $('f-sent'), reset: $('f-reset') };
   var msg = $('msg');
 
   function show(kind, text) {
@@ -226,6 +272,16 @@
   });
   $('create-password').addEventListener('input', function (e) { strength(e.target.value, $('create-strength')); });
   $('change-password').addEventListener('input', function (e) { strength(e.target.value, $('change-strength')); });
+  $('reset-password').addEventListener('input', function (e) { strength(e.target.value, $('reset-strength')); });
+
+  // "Forgot your password?" and emailed first-sign-in links only make sense when the server can send email.
+  function applyMail() {
+    $('login-forgot').classList.toggle('hidden', !mailEnabled);
+    $('login-foot-sep').classList.toggle('hidden', !mailEnabled);
+    $('login-lede').textContent = mailEnabled
+      ? 'Use the email your trainer or administrator added. First time here? Leave the password blank and we will email you a link to create one.'
+      : 'Use the email your trainer or administrator added. If you have not set a password yet, leave that field blank and we will help you create one.';
+  }
 
   // ---- Sign in --------------------------------------------------------------
   forms.login.addEventListener('submit', function (e) {
@@ -244,6 +300,11 @@
         $('create-email-field').value = d.email;
         $('create-avatar').textContent = initials(d.name || d.email);
         setMode('create');
+        return;
+      }
+      if (d.status === 'link_sent') {
+        // No password yet and email is set up: they claim the account through their inbox.
+        showSent(d.email || email);
         return;
       }
       if (d.status === 'password_required') {
@@ -320,8 +381,76 @@
     }
   });
 
+  // ---- Forgot password / emailed links --------------------------------------
+  var lastSentEmail = '';
+  function showSent(email) {
+    lastSentEmail = email;
+    $('sent-email').textContent = email;
+    setMode('sent');
+  }
+  function requestLink(email, btn) {
+    if (btn) busy(btn, true, 'Sending…');
+    return api('auth.php?action=request_reset', { email: email }).then(function (d) {
+      if (btn) busy(btn, false);
+      if (d.status === 'sent') { showSent(email); return true; }
+      show('error', d.error || 'Could not send the email. Please try again.');
+      return false;
+    });
+  }
+  $('login-forgot').addEventListener('click', function () { clearMsg(); $('forgot-email').value = $('login-email').value.trim(); setMode('forgot'); });
+  forms.forgot.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearMsg();
+    var email = $('forgot-email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { show('error', 'Enter a valid email address.'); $('forgot-email').focus(); return; }
+    requestLink(email, $('forgot-submit'));
+  });
+  $('forgot-back').addEventListener('click', function () { clearMsg(); setMode('login'); });
+  $('sent-back').addEventListener('click', function () { clearMsg(); $('login-password').value = ''; setMode('login'); });
+  $('sent-again').addEventListener('click', function () {
+    clearMsg();
+    requestLink(lastSentEmail).then(function (sent) { if (sent) show('info', 'Another link is on its way to ' + lastSentEmail + '.'); });
+  });
+
+  function prepReset(d) {
+    var welcome = d.purpose === 'welcome' || !d.has_password;
+    $('reset-eyebrow').textContent = welcome ? 'Welcome' : 'Password reset';
+    $('reset-title').textContent = welcome ? 'Create your password.' : 'Choose a new password.';
+    $('reset-lede').textContent = welcome ? 'You will use this password from now on. At least 8 characters.' : 'Pick a new password for your account. At least 8 characters.';
+    $('reset-name').textContent = d.name || '';
+    $('reset-email').textContent = d.email || '';
+    $('reset-email-field').value = d.email || '';
+    $('reset-avatar').textContent = initials(d.name || d.email);
+  }
+  forms.reset.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearMsg();
+    var pw = $('reset-password').value, cf = $('reset-confirm').value;
+    if (pw.length < 8) { show('error', 'Your password needs at least 8 characters.'); $('reset-password').focus(); return; }
+    if (pw !== cf) { show('error', 'The two passwords do not match.'); $('reset-confirm').focus(); return; }
+    var btn = $('reset-submit');
+    busy(btn, true, 'Saving…');
+    api('auth.php?action=reset_password', { token: resetToken, password: pw }).then(function (d) {
+      busy(btn, false);
+      if (d.status === 'ok') { session = d; show('success', 'Password saved. Taking you in…'); setTimeout(finish, 600); return; }
+      show('error', d.error || 'Could not save your password.');
+      if (d.code === 'bad_token') setMode('login');
+    });
+  });
+
   // ---- Boot -----------------------------------------------------------------
-  if (mode === 'change') {
+  api('auth.php?action=health').then(function (h) { mailEnabled = !!(h && h.mail); applyMail(); });
+  if (mode === 'reset') {
+    // Keep the one-time token out of the address bar and browser history.
+    if (history.replaceState) history.replaceState(null, '', location.pathname + (qs.get('next') ? '?next=' + encodeURIComponent(qs.get('next')) : ''));
+    api('auth.php?action=reset_info&token=' + encodeURIComponent(resetToken)).then(function (d) {
+      if (d.status === 'ok') { prepReset(d); setMode('reset'); return; }
+      setMode('login');
+      show('error', d.error || 'This link is not valid. Request a new one below.');
+    });
+  } else if (mode === 'forgot') {
+    setMode('forgot');
+  } else if (mode === 'change') {
     api('auth.php?action=me').then(function (d) {
       if (d.user) {
         session = d;

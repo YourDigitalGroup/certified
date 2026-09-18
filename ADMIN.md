@@ -38,7 +38,7 @@ Only this account is a super admin at the start. Promote others under **People �
 | Role | Can do |
 | --- | --- |
 | Student | Take the training. Courses unlock strictly in hub order: Our Process blocks 1–10, then Digital 101 Online Visibility, Content Marketing, then Digital 201. |
-| Trainer | Everything a student can, plus **attendance**: mark who has passed which course (from a person's page or a course's Attendance tab). Sees everyone, pre-filtered to their own group. |
+| Trainer | Everything a student can, plus **attendance**: mark who has passed which course (from a person's page or a course's Attendance tab), and email someone a password link. Sees everyone, pre-filtered to their own group. |
 | Admin | Everything a trainer can, plus add/edit/import/delete people, set passwords, edit quizzes and replace videos. Cannot create or edit super admins. |
 | Super admin | Full control, including granting/removing super admin and site settings (pass mark, portal title). |
 
@@ -47,7 +47,7 @@ Trainers, admins and super admins are not gated — they can open any course.
 ## People
 
 - **Add a person**: first/last name, group name, email, phone, address, role, and one of two sign-in options:
-  - *No password yet* — they sign in with just their email the first time and are asked to create a password.
+  - *No password yet* — once email is set up (see **Email and password resets**) they receive a link to choose a password: tick *Email them the set-your-password link now*, or they get it when they first enter their email on the sign-in page. Without email they sign in with just their email the first time and create a password on the spot.
   - *Set a password now* — optionally require them to choose a new one at first sign-in.
 - **Import CSV**: any column order, header row required. Recognised headers include `first_name`, `last_name`, `email`, `group`, `phone`, `address`, `city`, `state`, `zip`, `role`, `password`, `completed`, plus three for migrating from another system: `password_hash` (a WordPress `$wp$2y$…`/`$P$…` or bcrypt hash, so the person keeps their old password), `created_at` (registration date) and `last_login`. You confirm the column mapping before importing. Existing people (matched by email) are updated or skipped — your choice; a password hash or last sign-in only fills in a blank, never overwrites. A `completed` column (course ids or titles separated by `|`) records those courses as passed; append the date as `p1@2026-05-22` to keep the original pass date. A downloadable template is in the import dialog.
 - **Filters**: search (name, email, group, phone), group, role, **stage** (Not started · In progress · Process complete · Digital 101 complete · Fully certified) and **% complete band**, plus sort by name, group, most/least progress, last sign-in or newest. Stage means the furthest tier fully completed in unlock order.
@@ -60,7 +60,7 @@ The old site was WordPress + LearnPress. Its export was converted to `certified-
 
 ### The passwordless first sign-in
 
-Anyone who knows an email address can claim an account that has no password yet. That is inherent in the "email only" option you chose; once a password is set it is the only way in. If you want more protection later, the API already stores enough to add an invite code.
+Until email is set up, anyone who knows an email address can claim an account that has no password yet; that is inherent in the "email only" option. Once Mailgun is configured (next section) an account can only be claimed through the link sent to that inbox, and the on-the-spot path is switched off.
 
 ## Groups
 
@@ -69,6 +69,34 @@ Groups are a managed list (seeded from `DEFAULT_GROUPS` in `api/config.php`; 38 
 The **Groups** page shows every group with member count, how many have not started, how many have finished Our Process, how many are fully certified, average progress and last activity. Open a group to see its members with stage and progress, search or filter them by stage, **select everyone shown** (or tick individuals) and use **Mark passed…** to record one or more courses for all of them at once, with an optional note; **Remove pass…** reverses it. Admins can add a person straight into the group, rename or delete it, and anyone can export the member list as CSV.
 
 Importing a CSV whose group column has a name not on the list creates that group (the import summary says how many). Group names are matched ignoring case, so "kensington" lands in "Kensington".
+
+## Email and password resets (Mailgun)
+
+Email is optional, but once it is set up people can help themselves:
+
+- **Forgot your password?** on the sign-in page emails a one-time link. The link works once, expires after an hour, and requesting a new one cancels the old. The page gives the same answer whether or not the address has an account, so nobody can probe the directory.
+- **First sign-in** for someone added without a password: entering their email sends them a "set your password" link instead of letting anyone who knows the address claim the account.
+- **Add a person** has a ticked *Email them the set-your-password link now* box, so new people get their invitation straight away.
+- **Email a reset link** on a person's page (trainer and up) sends the same email when someone is stuck; no more reading temporary passwords over the phone. Every link sent is written to the activity log.
+
+### Setting it up
+
+1. In Mailgun, add a sending domain (for example `mg.44i.com`), publish the DNS records it shows and wait for it to verify. Create a private API key under *API Security*.
+2. In the admin panel open **Settings → Email (Mailgun)**. Enter the domain, pick the region your Mailgun account lives in (US or EU), paste the key, and set the From name and From address (an address on the sending domain, such as `noreply@mg.44i.com`). Reply-To is optional.
+3. Check **Portal address used in links**. It is detected from the page you are on; saving pins it so emailed links always point at the live site.
+4. **Save email settings**, then **Send a test email to me**.
+
+The API key is stored in the database (blocked from the web by `data/.htaccess`) and only its last four characters are ever shown again. Until email is configured the sign-in page hides *Forgot your password?* and first sign-in falls back to on-the-spot password creation.
+
+### If emails do not arrive
+
+- *Mailgun rejected the API key (401)*: wrong key, or the region does not match your account.
+- *Mailgun does not recognise that sending domain (404)*: check the spelling and the region.
+- Sandbox domains only deliver to addresses you authorised in Mailgun; use a verified domain for real use.
+- Mailgun's *Sending → Logs* shows every accepted, delivered or bounced message.
+- Self-service requests are limited to 3 per address and 10 per connection per hour. Links sent by staff are not limited.
+
+For local development start PHP with `PORTAL_MAIL_DRIVER=log`; every message is then appended to `data/tmp/mail.log` instead of being sent, and no API key is needed.
 
 ## Sign in as another person (impersonation)
 
@@ -110,6 +138,7 @@ Modules built from interactive screens rather than video still have editable qui
 
 - Passwords are hashed with PHP's `password_hash`. Sessions are cookie-based (`HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS) and expire after 12 idle hours.
 - Every state-changing request needs a per-session CSRF token; the UI sends it automatically.
+- Password links carry a random 256-bit token. Only its SHA-256 hash is stored, each link works once, expires after an hour, and the token is removed from the address bar as soon as the page loads.
 - Sign-in is throttled: 10 failures for an email or IP address within 15 minutes pauses that address.
 - Uploaded videos are checked by extension and file signature, stored under `uploads/custom/`, and that folder gets an `.htaccess` that refuses to execute scripts.
 - The portal page still embeds the ElevenLabs API key it always did (in the `data-props` attribute of `index.html`). It is visible to anyone who can view the page source; rotate it or move narration behind the API if that matters.
@@ -129,6 +158,8 @@ Commit the updated `data/course-manifest.json`. Quiz edits and video replacement
 ```bash
 php -S 127.0.0.1:8085 -t .
 # then open http://127.0.0.1:8085/
+# with emails written to data/tmp/mail.log instead of sent:
+PORTAL_MAIL_DRIVER=log php -S 127.0.0.1:8085 -t .
 ```
 
 Delete `data/portal.sqlite` to start over (the super admin is re-seeded on the next request).

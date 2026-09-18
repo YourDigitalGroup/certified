@@ -51,6 +51,18 @@ define('ELEVENLABS_MODEL', 'eleven_turbo_v2_5');
 define('ELEVENLABS_VOICES', ['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'UgBBYS2sOqTuMpoF3BR0', 'nPczCjzI2devNBz1zQrb', 'cgSgspJ2msm6clMCkdW9']);
 define('VO_CACHE_DIR', DATA_DIR . '/vo-cache');
 
+// Groups people can belong to. Seeded into the groups table on first run (and on upgrade);
+// admins can add, rename or merge groups later in the admin panel.
+define('DEFAULT_GROUPS', [
+    '44i', '712 Digital', 'BK Media Solutions', 'BR Digital', 'Bravo Mic Digital', 'Brazos Digital Media',
+    'Brewer Broadcasting', 'CF Digital', 'Choice Digital', 'CI Digital', 'EAB', 'Elevated Results', 'ESPN Arkansas',
+    'Galaxy Media', 'Gulf Coast Digital', 'Iowa Digital Connect', 'Kensington', 'Kingfish Pro Digital', 'KXLG',
+    'The Lake', 'Mavrik Media', 'Monterey Digital Marketing', 'Ohana Digital Services', 'Online Visibility Pros', 'P5',
+    'Paradise Digital', 'Piedmont Digital Group', 'RB Digital', 'Ready Prospect', 'River Media', 'Riverfront Digital',
+    'SagamoreHill Digital', 'Sage', 'Shake Broadcasting', 'Small Business Enterprise', 'Supertalk Digital', 'Titan Digital',
+    'West Texas',
+]);
+
 // "Sign in as" (impersonation) is a super-admin feature. Leave this list non-empty to
 // restrict it to specific super admin accounts; an empty array allows every super admin.
 define('IMPERSONATE_ALLOWED_EMAILS', ['scott@44interactive.com']);

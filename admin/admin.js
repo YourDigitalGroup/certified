@@ -85,7 +85,8 @@
     bg.addEventListener('mousedown', function (e) { if (e.target === bg && !opts.sticky) close(); });
     $$('[data-close]', bg).forEach(function (b) { b.addEventListener('click', close); });
     var first = $('input:not([type=hidden]), select, textarea, button.primary', $('.m-b', bg));
-    if (first) setTimeout(function () { first.focus(); }, 40);
+    // Focus the first field once the dialog has painted — unless the person has already clicked into a field.
+    if (first) setTimeout(function () { if (bg.isConnected && !bg.contains(document.activeElement)) first.focus(); }, 40);
     return { el: bg, close: close };
   }
   function confirmDialog(title, text, okLabel, danger) {
@@ -129,6 +130,7 @@
     dash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>',
     users: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><circle cx="17" cy="9" r="3"/><path d="M22 20v-1a4 4 0 0 0-3-3.9"/></svg>',
     courses: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M10 8l5 3-5 3z" fill="currentColor" stroke="none"/></svg>',
+    groups: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18"/><circle cx="8" cy="15" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>',
     settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     account: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -139,6 +141,7 @@
     var nav = [
       { h: '#/dashboard', l: 'Dashboard', i: 'dash' },
       { h: '#/users', l: 'People', i: 'users' },
+      { h: '#/groups', l: 'Groups', i: 'groups' },
       { h: '#/courses', l: 'Courses', i: 'courses' },
     ];
     if (can('superadmin')) nav.push({ h: '#/settings', l: 'Settings', i: 'settings' });
@@ -205,6 +208,7 @@
     try {
       switch (parts[0]) {
         case 'users': view = parts[1] ? viewUser(decodeURIComponent(parts[1])) : viewUsers(); break;
+        case 'groups': view = parts[1] ? viewGroup(decodeURIComponent(parts[1])) : viewGroups(); break;
         case 'courses': view = parts[1] ? viewCourse(decodeURIComponent(parts[1]), parts[2]) : viewCourses(); break;
         case 'settings': view = can('superadmin') ? viewSettings() : viewDashboard(); break;
         case 'account': view = viewAccount(); break;
@@ -246,6 +250,10 @@
       return d.users;
     });
   }
+  function ensureGroups(force) {
+    if (S.groups && !force) return Promise.resolve(S.groups);
+    return api('users.php?action=groups').then(function (d) { S.groups = d.groups; return S.groups; });
+  }
   function groupOptions(selected, includeAll) {
     var opts = includeAll ? '<option value="">All groups</option>' : '<option value="">— none —</option>';
     (S.groups || []).forEach(function (g) {
@@ -281,7 +289,7 @@
           '</div></div>' +
           '<div class="tiles">' +
             '<div class="tile"><div class="k">People</div><div class="v">' + summary.users + '</div><div class="d"><a href="#/users">Manage the directory →</a></div></div>' +
-            '<div class="tile"><div class="k">Groups</div><div class="v">' + groups.length + '</div><div class="d">' + esc(groups.slice(0, 3).map(function (g) { return g.group_name; }).join(', ')) + (groups.length > 3 ? '…' : '') + '</div></div>' +
+            '<div class="tile"><div class="k">Groups</div><div class="v">' + groups.length + '</div><div class="d"><a href="#/groups">Open groups →</a></div></div>' +
             '<div class="tile"><div class="k">Courses</div><div class="v">' + S.courses.length + '</div><div class="d">' + S.courses.filter(function (c) { return c.quiz_edited_at || c.videos_replaced; }).length + ' customized</div></div>' +
             '<div class="tile"><div class="k">Passes recorded</div><div class="v">' + totalPasses + '</div><div class="d">across all people and courses</div></div>' +
           '</div>' +
@@ -422,7 +430,7 @@
       users.map(function (u) {
         return '<tr class="click" data-href="#/users/' + u.id + '">' +
           '<td><div class="row"><span class="avatar">' + esc(initials(u.name)) + '</span><div><div><strong>' + esc(u.name) + '</strong></div><div class="sub">' + esc(u.email) + (u.phone ? ' · ' + esc(u.phone) : '') + '</div></div></div></td>' +
-          '<td>' + (u.group_name ? esc(u.group_name) : '<span class="muted">—</span>') + '</td>' +
+          '<td>' + (u.group_name ? '<a href="#/groups/' + encodeURIComponent(u.group_name) + '">' + esc(u.group_name) + '</a>' : '<span class="muted">—</span>') + '</td>' +
           '<td>' + roleBadge(u.role) + '</td>' +
           '<td>' + stageBadge(stageOf(u.completed_ids)) + '</td>' +
           '<td>' + progressBar(u.completed_count || 0, total) + '</td>' +
@@ -433,15 +441,19 @@
   }
 
   // Add / edit person form (modal)
-  function openUserForm(user) {
+  function openUserForm(user, presetGroup) {
+    ensureGroups().then(function () { openUserFormNow(user, presetGroup); }, function (e) { toast(e.message, 'err'); });
+  }
+  function openUserFormNow(user, presetGroup) {
     var isNew = !user;
     var roles = assignableRoles();
+    var groupValue = user ? user.group_name : (presetGroup || '');
     var body =
       '<div class="fields">' +
         '<div><label class="f">First name</label><input class="input" name="first_name" value="' + attr(user ? user.first_name : '') + '" autocomplete="off"></div>' +
         '<div><label class="f">Last name</label><input class="input" name="last_name" value="' + attr(user ? user.last_name : '') + '" autocomplete="off"></div>' +
         '<div class="span2"><label class="f">Email <span class="muted">(used to sign in)</span></label><input class="input" name="email" type="email" value="' + attr(user ? user.email : '') + '" autocomplete="off" required></div>' +
-        '<div><label class="f">Group name</label><input class="input" name="group_name" list="group-list" value="' + attr(user ? user.group_name : '') + '" autocomplete="off" placeholder="e.g. KXYZ Radio"><datalist id="group-list">' + (S.groups || []).map(function (g) { return '<option value="' + attr(g.group_name) + '">'; }).join('') + '</datalist></div>' +
+        '<div><label class="f">Group</label><select class="input" name="group_name">' + groupOptions(groupValue, false) + (groupValue && !(S.groups || []).some(function (g) { return g.group_name === groupValue; }) ? '<option value="' + attr(groupValue) + '" selected>' + esc(groupValue) + '</option>' : '') + '</select>' + (can('admin') ? '<div class="hint">Need a new group? Add it under <a href="#/groups">Groups</a>.</div>' : '') + '</div>' +
         '<div><label class="f">Phone</label><input class="input" name="phone" value="' + attr(user ? user.phone : '') + '" autocomplete="off"></div>' +
         '<div class="span2"><label class="f">Address</label><input class="input" name="address" value="' + attr(user ? user.address : '') + '" autocomplete="off" placeholder="Street address"></div>' +
         '<div><label class="f">City</label><input class="input" name="city" value="' + attr(user ? user.city : '') + '" autocomplete="off"></div>' +
@@ -762,6 +774,180 @@
       confirmDialog('Delete person', 'Permanently delete <strong>' + esc(u.name) + '</strong> (' + esc(u.email) + ') and all of their recorded progress? This cannot be undone.', 'Delete', true).then(function (yes) {
         if (yes) api('users.php?action=delete', { id: u.id }).then(function () { toast(u.name + ' deleted.', 'ok'); location.hash = '#/users'; }).catch(function (e) { toast(e.message, 'err'); });
       });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Groups
+  // ---------------------------------------------------------------------------
+  var groupsQ = '';
+  function viewGroups() {
+    return Promise.all([api('groups.php?action=list'), loadCourses()]).then(function (res) {
+      var groups = res[0].groups;
+      S.groups = groups.map(function (g) { return { id: g.id, group_name: g.name, n: g.members }; });
+      var html = '<div class="page-head"><div><div class="eyebrow">Directory</div><h1>Groups</h1><p class="lede">Every group people can belong to. Open a group to see its members, select everyone and take attendance.</p></div>' +
+        '<div class="row wrap">' + (can('admin') ? '<button class="btn primary" id="g-new">+ New group</button>' : '') + '</div></div>' +
+        '<div class="card tight"><div class="toolbar" style="padding:14px 16px 0;margin:0"><div class="search">' + ICONS.search + '<input class="input" id="g-q" placeholder="Search groups" value="' + attr(groupsQ) + '"></div><span class="muted small nowrap" id="g-count"></span></div>' +
+        '<div class="table-wrap" style="margin-top:12px" id="g-table"></div></div>';
+      var main = setMain(html);
+      function render() {
+        var q = groupsQ.toLowerCase();
+        var list = groups.filter(function (g) { return !q || g.name.toLowerCase().indexOf(q) >= 0; });
+        $('#g-count', main).textContent = list.length + (list.length === 1 ? ' group' : ' groups');
+        $('#g-table', main).innerHTML = list.length ? '<table><thead><tr><th>Group</th><th class="right">Members</th><th class="right">Not started</th><th class="right">Process complete</th><th class="right">Certified</th><th>Avg progress</th><th>Last active</th></tr></thead><tbody>' +
+          list.map(function (g) {
+            return '<tr class="click" data-href="#/groups/' + encodeURIComponent(g.name) + '">' +
+              '<td><strong>' + esc(g.name) + '</strong>' + (g.staff ? '<div class="sub">' + g.staff + ' trainer' + (g.staff === 1 ? '' : 's') + ' / admin' + (g.staff === 1 ? '' : 's') + '</div>' : '') + '</td>' +
+              '<td class="right">' + g.members + '</td><td class="right">' + g.not_started + '</td><td class="right">' + g.process_complete + '</td><td class="right">' + g.certified + '</td>' +
+              '<td><span class="prog"><span class="bar"><div style="width:' + g.avg_pct + '%"></div></span><span class="n">' + g.avg_pct + '%</span></span></td>' +
+              '<td class="muted small nowrap">' + (g.last_active ? esc(fmtDate(g.last_active)) : '—') + '</td></tr>';
+          }).join('') + '</tbody></table>' : '<div class="empty"><strong>No groups match.</strong></div>';
+        bindRowLinks(main);
+      }
+      render();
+      $('#g-q', main).addEventListener('input', function (e) { groupsQ = e.target.value; render(); });
+      if ($('#g-new', main)) $('#g-new', main).addEventListener('click', function () {
+        var m = modal({ title: 'New group', body: '<label class="f">Group name</label><input class="input" id="ng-name" placeholder="e.g. KXLG"><div class="notice err hidden mt" id="ng-err"></div>',
+          footer: '<button class="btn" data-close>Cancel</button><button class="btn primary" id="ng-ok">Add group</button>' });
+        var go = function () {
+          var name = $('#ng-name', m.el).value.trim();
+          if (!name) { $('#ng-err', m.el).textContent = 'Enter a name.'; $('#ng-err', m.el).classList.remove('hidden'); return; }
+          api('groups.php?action=create', { name: name }).then(function () { m.close(); toast('Group added.', 'ok'); S.groups = null; route(); })
+            .catch(function (e) { $('#ng-err', m.el).textContent = e.message; $('#ng-err', m.el).classList.remove('hidden'); });
+        };
+        $('#ng-ok', m.el).addEventListener('click', go);
+        $('#ng-name', m.el).addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+      });
+    });
+  }
+
+  var groupView = { q: '', stage: '' };
+  function viewGroup(name) {
+    return Promise.all([api('groups.php?action=get&name=' + encodeURIComponent(name)), loadCourses(), ensureGroups()]).then(function (res) {
+      var g = res[0].group, members = res[0].members, total = res[0].course_count || S.courseCount;
+      var selected = {};
+      var plural = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
+      var html = '<div class="crumbs"><a href="#/groups">Groups</a> › ' + esc(g.name) + '</div>' +
+        '<div class="page-head"><div><h1>' + esc(g.name) + '</h1><div class="row wrap" style="margin-top:6px"><span class="badge info">' + plural(g.members, 'member') + '</span>' +
+          (g.students != null ? '<span class="muted small">' + plural(g.students, 'student') + ' · ' + plural(g.staff, 'trainer/admin') + '</span>' : '') + '</div></div>' +
+        '<div class="row wrap">' +
+          (can('admin') ? '<button class="btn primary" id="gp-add">+ Add a person</button><button class="btn" id="gp-rename">Rename</button><button class="btn' + (g.members === 0 ? ' danger' : '') + '" id="gp-delete">' + (g.members === 0 ? 'Delete group' : 'Delete / merge…') + '</button>' : '') +
+          '<button class="btn" id="gp-export">Export members CSV</button>' +
+        '</div></div>' +
+        '<div class="tiles">' +
+          '<div class="tile"><div class="k">Not started</div><div class="v">' + (g.not_started || 0) + '</div></div>' +
+          '<div class="tile"><div class="k">Process complete</div><div class="v">' + (g.process_complete || 0) + '</div><div class="d">all 10 Our Process blocks</div></div>' +
+          '<div class="tile"><div class="k">Fully certified</div><div class="v">' + (g.certified || 0) + '</div><div class="d">all ' + total + ' modules</div></div>' +
+          '<div class="tile"><div class="k">Average progress</div><div class="v">' + (g.avg_pct || 0) + '%</div></div>' +
+        '</div>' +
+        '<div class="card tight">' +
+          '<div class="toolbar" style="padding:14px 16px 0;margin:0"><div class="search">' + ICONS.search + '<input class="input" id="gp-q" placeholder="Search members" value="' + attr(groupView.q) + '"></div>' +
+            '<select class="input" id="gp-stage"><option value="">All stages</option>' + STAGES.map(function (st) { return '<option value="' + st.k + '"' + (groupView.stage === st.k ? ' selected' : '') + '>' + st.l + '</option>'; }).join('') + '</select>' +
+            '<span class="muted small nowrap" id="gp-count"></span></div>' +
+          '<div class="table-wrap" style="margin-top:12px;max-height:60vh;overflow:auto" id="gp-table"></div>' +
+          '<div class="m-f" style="border-radius:0 0 16px 16px;position:sticky;bottom:0"><div class="left row wrap"><strong id="gp-sel">0 selected</strong><span class="muted small">Select people, then record a course pass for all of them at once.</span></div>' +
+            '<button class="btn danger" id="gp-unmark" disabled>Remove pass…</button><button class="btn primary" id="gp-mark" disabled>Mark passed…</button></div>' +
+        '</div>';
+      var main = setMain(html);
+      function filtered() {
+        var q = groupView.q.toLowerCase();
+        return members.filter(function (u) {
+          if (groupView.stage && stageOf(u.completed_ids) !== groupView.stage) return false;
+          if (q && (u.name + ' ' + u.email).toLowerCase().indexOf(q) < 0) return false;
+          return true;
+        });
+      }
+      function render() {
+        var list = filtered();
+        var allSel = list.length > 0 && list.every(function (u) { return selected[u.id]; });
+        $('#gp-count', main).textContent = list.length === members.length ? plural(members.length, 'member') : list.length + ' of ' + members.length + ' members';
+        $('#gp-table', main).innerHTML = list.length ? '<table><thead><tr><th style="width:36px"><input type="checkbox" class="cb" id="gp-all"' + (allSel ? ' checked' : '') + ' title="Select everyone shown"></th><th>Name</th><th>Role</th><th>Stage</th><th>Progress</th><th>Last sign-in</th><th></th></tr></thead><tbody>' +
+          list.map(function (u) {
+            return '<tr class="click' + (selected[u.id] ? ' selected' : '') + '" data-uid="' + u.id + '"><td><input type="checkbox" class="cb gp-cb" data-uid="' + u.id + '"' + (selected[u.id] ? ' checked' : '') + '></td>' +
+              '<td><div class="row"><span class="avatar">' + esc(initials(u.name)) + '</span><div><div><strong>' + esc(u.name) + '</strong></div><div class="sub">' + esc(u.email) + '</div></div></div></td>' +
+              '<td>' + roleBadge(u.role) + '</td><td>' + stageBadge(stageOf(u.completed_ids)) + '</td><td>' + progressBar(u.completed_count || 0, total) + '</td>' +
+              '<td class="muted small nowrap">' + (u.last_login_at ? esc(fmtDate(u.last_login_at, true)) : 'Never') + '</td>' +
+              '<td class="right nowrap"><a class="btn xs ghost" href="#/users/' + u.id + '">Open</a></td></tr>';
+          }).join('') + '</tbody></table>' : '<div class="empty"><strong>' + (members.length ? 'Nobody matches.' : 'No members yet.') + '</strong>' + (members.length ? 'Change the stage or search.' : (can('admin') ? 'Use + Add a person, or set someone’s group on their page.' : '')) + '</div>';
+        $$('tr[data-uid]', main).forEach(function (tr) {
+          tr.addEventListener('click', function (e) {
+            if (e.target.closest('a, input')) return;
+            var id = Number(tr.getAttribute('data-uid')); selected[id] = !selected[id]; render();
+          });
+        });
+        $$('.gp-cb', main).forEach(function (cb) { cb.addEventListener('change', function () { selected[Number(cb.getAttribute('data-uid'))] = cb.checked; render(); }); });
+        var all = $('#gp-all', main);
+        if (all) all.addEventListener('change', function () { list.forEach(function (u) { selected[u.id] = all.checked; }); render(); });
+        var n = Object.keys(selected).filter(function (k) { return selected[k]; }).length;
+        $('#gp-sel', main).textContent = n + ' selected';
+        $('#gp-mark', main).disabled = n === 0; $('#gp-unmark', main).disabled = n === 0;
+      }
+      render();
+      $('#gp-q', main).addEventListener('input', function (e) { groupView.q = e.target.value; render(); });
+      $('#gp-stage', main).addEventListener('change', function (e) { groupView.stage = e.target.value; render(); });
+      var selectedIds = function () { return Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number); };
+      $('#gp-mark', main).addEventListener('click', function () { openCoursePicker(selectedIds(), true, g.name); });
+      $('#gp-unmark', main).addEventListener('click', function () { openCoursePicker(selectedIds(), false, g.name); });
+      if ($('#gp-add', main)) $('#gp-add', main).addEventListener('click', function () { openUserForm(null, g.name); });
+      if ($('#gp-rename', main)) $('#gp-rename', main).addEventListener('click', function () {
+        var m = modal({ title: 'Rename ' + g.name, body: '<label class="f">New name</label><input class="input" id="rn-name" value="' + attr(g.name) + '"><div class="hint">Renaming onto a name that already exists merges the two groups.</div><div class="notice err hidden mt" id="rn-err"></div>',
+          footer: '<button class="btn" data-close>Cancel</button><button class="btn primary" id="rn-ok">Rename</button>' });
+        $('#rn-ok', m.el).addEventListener('click', function () {
+          var nn = $('#rn-name', m.el).value.trim();
+          if (!nn) return;
+          api('groups.php?action=rename', { name: g.name, new_name: nn }).then(function (d) {
+            m.close(); toast(d.merged ? 'Merged into ' + d.group.name + '.' : 'Group renamed.', 'ok'); S.groups = null;
+            var target = '#/groups/' + encodeURIComponent(d.group.name);
+            if (location.hash === target) route(); else location.hash = target;
+          }).catch(function (e) { $('#rn-err', m.el).textContent = e.message; $('#rn-err', m.el).classList.remove('hidden'); });
+        });
+      });
+      if ($('#gp-delete', main)) $('#gp-delete', main).addEventListener('click', function () {
+        var others = (S.groups || []).filter(function (x) { return x.group_name !== g.name; });
+        var body = g.members
+          ? '<p style="margin:0 0 12px;font-size:14px;line-height:1.5">' + plural(g.members, 'person').replace('persons', 'people') + ' belong to <strong>' + esc(g.name) + '</strong>. Where should they go?</p><select class="input" id="dl-to"><option value="">No group</option>' + others.map(function (x) { return '<option value="' + attr(x.group_name) + '">' + esc(x.group_name) + '</option>'; }).join('') + '</select>'
+          : '<p style="margin:0;font-size:14px">Delete the empty group <strong>' + esc(g.name) + '</strong>?</p>';
+        var m = modal({ title: g.members ? 'Delete or merge group' : 'Delete group', body: body + '<div class="notice err hidden mt" id="dl-err"></div>', footer: '<button class="btn" data-close>Cancel</button><button class="btn danger" id="dl-ok">Delete group</button>' });
+        $('#dl-ok', m.el).addEventListener('click', function () {
+          var to = $('#dl-to', m.el) ? $('#dl-to', m.el).value : '';
+          api('groups.php?action=delete', { name: g.name, reassign_to: to }).then(function () { m.close(); toast('Group deleted.', 'ok'); S.groups = null; location.hash = '#/groups'; })
+            .catch(function (e) { $('#dl-err', m.el).textContent = e.message; $('#dl-err', m.el).classList.remove('hidden'); });
+        });
+      });
+      $('#gp-export', main).addEventListener('click', function () {
+        var rows = [['first_name', 'last_name', 'email', 'group', 'role', 'stage', 'completed_count', 'last_login']].concat(members.map(function (u) {
+          var st = STAGES.filter(function (x) { return x.k === stageOf(u.completed_ids); })[0];
+          return [u.first_name, u.last_name, u.email, u.group_name, u.role, st ? st.l : '', String(u.completed_count || 0), u.last_login_at || ''];
+        }));
+        var csv = rows.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\n') + '\n';
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = g.name.replace(/[^\w.-]+/g, '-') + '-members.csv'; a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      });
+    });
+  }
+
+  // Pick one or more courses to mark as passed (or remove) for a set of people.
+  function openCoursePicker(userIds, passed, groupName) {
+    if (!userIds.length) return;
+    var secs = coursesBySection();
+    var body = '<div class="notice ' + (passed ? 'info' : 'warn') + ' mb">' + (passed ? 'Record a pass' : 'Remove the pass') + ' for <strong>' + userIds.length + ' ' + (userIds.length === 1 ? 'person' : 'people') + '</strong>' + (groupName ? ' in ' + esc(groupName) : '') + '. Tick the course' + (passed ? '(s) they completed.' : '(s) to remove.') + '</div>' +
+      (passed ? '<label class="f">Note (optional)</label><input class="input mb" id="cp-note" placeholder="e.g. Group session ' + esc(new Date().toLocaleDateString()) + '">' : '') +
+      '<div class="matrix list-scroll" style="max-height:48vh;border:0">' + secs.map(function (sec) {
+        return '<div class="sec"><div class="sec-h"><label class="check"><input type="checkbox" class="cp-sec" data-sec="' + attr(sec.name) + '"> ' + esc(sec.name) + '</label><span class="cnt">' + sec.courses.length + '</span></div>' +
+          sec.courses.map(function (c) { return '<label class="m" data-sec="' + attr(sec.name) + '"><input type="checkbox" class="cb cp-cb" data-id="' + attr(c.id) + '"><span class="t">' + esc(c.title) + '</span></label>'; }).join('') + '</div>';
+      }).join('') + '</div><div class="notice err hidden mt" id="cp-err"></div>';
+    var m = modal({ title: passed ? 'Mark as passed' : 'Remove pass', body: body, sticky: true,
+      footer: '<span class="left muted small" id="cp-count">0 courses selected</span><button class="btn" data-close>Cancel</button><button class="btn ' + (passed ? 'primary' : 'danger') + '" id="cp-ok" disabled>' + (passed ? 'Mark passed' : 'Remove pass') + '</button>' });
+    function chosen() { return $$('.cp-cb', m.el).filter(function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-id'); }); }
+    function refresh() { var n = chosen().length; $('#cp-count', m.el).textContent = n + (n === 1 ? ' course selected' : ' courses selected'); $('#cp-ok', m.el).disabled = n === 0; }
+    $$('.cp-cb', m.el).forEach(function (cb) { cb.addEventListener('change', refresh); });
+    $$('.cp-sec', m.el).forEach(function (sa) { sa.addEventListener('change', function () { $$('.m[data-sec="' + sa.getAttribute('data-sec').replace(/"/g, '\\"') + '"] .cp-cb', m.el).forEach(function (c) { c.checked = sa.checked; }); refresh(); }); });
+    $('#cp-ok', m.el).addEventListener('click', function () {
+      var ids = chosen();
+      var btn = $('#cp-ok', m.el); btn.disabled = true;
+      api('completions.php?action=set', { user_ids: userIds, course_ids: ids, passed: passed, note: passed && $('#cp-note', m.el) ? $('#cp-note', m.el).value.trim() : '' })
+        .then(function (d) { m.close(); toast((passed ? 'Marked ' : 'Removed ') + d.changed + ' record' + (d.changed === 1 ? '' : 's') + '.', 'ok'); S.courses = null; route(); })
+        .catch(function (e) { btn.disabled = false; $('#cp-err', m.el).textContent = e.message; $('#cp-err', m.el).classList.remove('hidden'); });
     });
   }
 

@@ -219,7 +219,57 @@ function migrate(PDO $pdo): void
         )");
         $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_version', '1')");
     }
+    if ($ver < 2) {
+        // Groups become a managed list. Seed the configured names, then keep any group
+        // name already in use by a person so nobody is orphaned.
+        $pdo->exec("CREATE TABLE IF NOT EXISTS groups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL
+        )");
+        $ins = $pdo->prepare('INSERT OR IGNORE INTO groups (name, created_at) VALUES (?, ?)');
+        foreach (DEFAULT_GROUPS as $g) $ins->execute([$g, now()]);
+        $existing = array_map('mb_strtolower', array_column($pdo->query('SELECT name FROM groups')->fetchAll(), 'name'));
+        foreach ($pdo->query("SELECT DISTINCT group_name FROM users WHERE group_name <> ''")->fetchAll() as $r) {
+            if (!in_array(mb_strtolower($r['group_name']), $existing, true)) { $ins->execute([$r['group_name'], now()]); $existing[] = mb_strtolower($r['group_name']); }
+        }
+        $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_version', '2')");
+    }
     seed_superadmin($pdo);
+}
+
+// ---------------------------------------------------------------------------
+// Groups
+// ---------------------------------------------------------------------------
+/** Find a group by name, ignoring case and surrounding spaces. */
+function group_find(string $name): ?array
+{
+    $st = db()->prepare('SELECT * FROM groups WHERE LOWER(name) = LOWER(?)');
+    $st->execute([trim($name)]);
+    $g = $st->fetch();
+    return $g ?: null;
+}
+
+/**
+ * Return the canonical spelling of a group, creating it when unknown.
+ * $created (by reference) is incremented when a new group had to be made.
+ */
+function group_ensure(string $name, ?int &$created = null): string
+{
+    $name = trim(preg_replace('/\s+/', ' ', $name));
+    if ($name === '') return '';
+    $g = group_find($name);
+    if ($g) return $g['name'];
+    db()->prepare('INSERT OR IGNORE INTO groups (name, created_at) VALUES (?, ?)')->execute([mb_substr($name, 0, 120), now()]);
+    if ($created !== null) $created++;
+    return mb_substr($name, 0, 120);
+}
+
+/** All groups with member counts, for pickers and filters. */
+function groups_with_counts(): array
+{
+    $rows = db()->query('SELECT g.id, g.name, (SELECT COUNT(*) FROM users u WHERE u.group_name = g.name) AS n FROM groups g ORDER BY LOWER(g.name)')->fetchAll();
+    return array_map(function ($r) { return ['id' => (int)$r['id'], 'group_name' => $r['name'], 'n' => (int)$r['n']]; }, $rows);
 }
 
 function seed_superadmin(PDO $pdo): void

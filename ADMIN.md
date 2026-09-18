@@ -51,16 +51,24 @@ Trainers, admins and super admins are not gated — they can open any course.
   - *Set a password now* — optionally require them to choose a new one at first sign-in.
 - **Import CSV**: any column order, header row required. Recognised headers include `first_name`, `last_name`, `email`, `group`, `phone`, `address`, `city`, `state`, `zip`, `role`, `password`, `completed`, plus three for migrating from another system: `password_hash` (a WordPress `$wp$2y$…`/`$P$…` or bcrypt hash, so the person keeps their old password), `created_at` (registration date) and `last_login`. You confirm the column mapping before importing. Existing people (matched by email) are updated or skipped — your choice; a password hash or last sign-in only fills in a blank, never overwrites. A `completed` column (course ids or titles separated by `|`) records those courses as passed; append the date as `p1@2026-05-22` to keep the original pass date. A downloadable template is in the import dialog.
 - **Filters**: search (name, email, group, phone), group, role, **stage** (Not started · In progress · Process complete · Digital 101 complete · Fully certified) and **% complete band**, plus sort by name, group, most/least progress, last sign-in or newest. Stage means the furthest tier fully completed in unlock order.
+- **Export CSV**: the whole directory including completed course ids.
+- **Person page**: details, access (role, password, active, delete) and the **completed courses matrix** — tick or untick any course, or a whole section, then Save.
 
 ### Migrating from the old certified.44i.com site
 
 The old site was WordPress + LearnPress. Its export was converted to `certified-legacy-users.csv` (109 people, their groups, WordPress password hashes, registration and last-login dates, and the nine "Our Process" quiz passes mapped to the matching blocks). Upload it once through **People → Import CSV** with *Update people who already exist* selected. People sign in with their old password; the hash is upgraded to a native one on their first successful login. The converter lives outside the repository (it needs the SQL dump); ask for it if the old site changes before cutover.
-- **Export CSV**: the whole directory including completed course ids.
-- **Person page**: details, access (role, password, active, delete) and the **completed courses matrix** — tick or untick any course, or a whole section, then Save.
 
 ### The passwordless first sign-in
 
 Anyone who knows an email address can claim an account that has no password yet. That is inherent in the "email only" option you chose; once a password is set it is the only way in. If you want more protection later, the API already stores enough to add an invite code.
+
+## Groups
+
+Groups are a managed list (seeded from `DEFAULT_GROUPS` in `api/config.php`; 38 names to start). When adding or editing a person you pick a group from the list; admins add, rename or merge groups under **Groups** (renaming onto an existing name merges the two). Deleting a group with members asks where to move them.
+
+The **Groups** page shows every group with member count, how many have not started, how many have finished Our Process, how many are fully certified, average progress and last activity. Open a group to see its members with stage and progress, search or filter them by stage, **select everyone shown** (or tick individuals) and use **Mark passed…** to record one or more courses for all of them at once, with an optional note; **Remove pass…** reverses it. Admins can add a person straight into the group, rename or delete it, and anyone can export the member list as CSV.
+
+Importing a CSV whose group column has a name not on the list creates that group (the import summary says how many). Group names are matched ignoring case, so "kensington" lands in "Kensington".
 
 ## Sign in as another person (impersonation)
 

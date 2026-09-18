@@ -573,7 +573,8 @@
         '</div>' +
         '<div id="imp-map" class="mt hidden"></div>' +
         '<div id="imp-result" class="mt hidden"></div>',
-      footer: '<div class="left row wrap"><label class="check"><input type="radio" name="imp-mode" value="upsert" checked> Update people who already exist (matched by email)</label><label class="check"><input type="radio" name="imp-mode" value="skip"> Skip people who already exist</label></div>' +
+      footer: '<div class="left stack" style="gap:6px"><div class="row wrap"><label class="check"><input type="radio" name="imp-mode" value="upsert" checked> Update people who already exist (matched by email)</label><label class="check"><input type="radio" name="imp-mode" value="skip"> Skip people who already exist</label></div>' +
+        '<label class="check"><input type="checkbox" id="imp-replace"> Replace earlier imported or trainer-marked progress with this file’s "completed" column <span class="muted">(quiz passes earned in the portal are kept)</span></label></div>' +
         '<button class="btn" data-close>Cancel</button><button class="btn primary" id="imp-go" disabled>Import</button>' });
     var el = m.el, rows = [], headers = [], mapping = [];
     $('#imp-template', el).addEventListener('click', function (e) {
@@ -635,9 +636,9 @@
         return o;
       }).filter(function (o) { return o.email; });
       var btn = $('#imp-go', el); btn.disabled = true; btn.textContent = 'Importing…';
-      api('users.php?action=import', { rows: payload, mode: $('[name=imp-mode]:checked', el).value }).then(function (d) {
+      api('users.php?action=import', { rows: payload, mode: $('[name=imp-mode]:checked', el).value, replace_progress: $('#imp-replace', el).checked }).then(function (d) {
         var res = $('#imp-result', el); res.classList.remove('hidden');
-        res.innerHTML = '<div class="notice ok"><strong>Done.</strong> ' + d.created + ' added · ' + d.updated + ' updated · ' + d.skipped + ' skipped' + (d.completions_added ? ' · ' + d.completions_added + ' course passes recorded' : '') + '.</div>' +
+        res.innerHTML = '<div class="notice ok"><strong>Done.</strong> ' + d.created + ' added · ' + d.updated + ' updated · ' + d.skipped + ' skipped' + (d.progress_reset ? ' · ' + d.progress_reset + ' earlier marks cleared' : '') + (d.completions_added ? ' · ' + d.completions_added + ' course passes recorded' : '') + (d.groups_created ? ' · ' + d.groups_created + ' group' + (d.groups_created === 1 ? '' : 's') + ' created' : '') + '.</div>' +
           (d.errors.length ? '<div class="notice warn mt"><strong>' + d.errors.length + ' row' + (d.errors.length === 1 ? '' : 's') + ' need attention:</strong><ul style="margin:6px 0 0;padding-left:18px">' + d.errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></div>' : '');
         btn.textContent = 'Close'; btn.disabled = false; btn.onclick = function () { m.close(); route(); };
         $('#imp-map', el).classList.add('hidden');

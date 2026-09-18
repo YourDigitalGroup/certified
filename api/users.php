@@ -83,13 +83,11 @@ switch ($action) {
             $p['completed_ids'] = $r['completed_ids'] ? explode(',', $r['completed_ids']) : [];
             $users[] = $p;
         }
-        $groups = db()->query("SELECT group_name, COUNT(*) AS n FROM users WHERE group_name <> '' GROUP BY group_name ORDER BY LOWER(group_name)")->fetchAll();
-        respond(['users' => $users, 'groups' => $groups, 'course_count' => count(course_map())]);
+        respond(['users' => $users, 'groups' => groups_with_counts(), 'course_count' => count(course_map())]);
 
     case 'groups':
         require_role('trainer');
-        $groups = db()->query("SELECT group_name, COUNT(*) AS n FROM users WHERE group_name <> '' GROUP BY group_name ORDER BY LOWER(group_name)")->fetchAll();
-        respond(['groups' => $groups]);
+        respond(['groups' => groups_with_counts()]);
 
     case 'get':
         require_role('trainer');
@@ -132,6 +130,7 @@ switch ($action) {
         $role = in_str($d, 'role', 'student');
         if (!in_array($role, assignable_roles($actor), true)) fail('You cannot assign the role "' . $role . '".', 403);
         $fields = clean_fields($d);
+        $fields['group_name'] = group_ensure($fields['group_name']);
         $password = (string)($d['password'] ?? '');
         $hash = null;
         if ($password !== '') {
@@ -157,6 +156,7 @@ switch ($action) {
         $id = in_int($d, 'id', 0);
         $t = target_user_or_fail($actor, (int)$id);
         $fields = clean_fields($d, $t);
+        $fields['group_name'] = group_ensure($fields['group_name']);
         $email = array_key_exists('email', $d) ? normalize_email(in_str($d, 'email')) : $t['email'];
         if (!valid_email($email)) fail('Enter a valid email address.');
         if ($email !== $t['email']) {
@@ -219,7 +219,7 @@ switch ($action) {
         $mode = in_str($d, 'mode', 'upsert') === 'skip' ? 'skip' : 'upsert';
         $assignable = assignable_roles($actor);
         $pdo = db();
-        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0;
+        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0;
         $pdo->beginTransaction();
         try {
             foreach ($rows as $i => $row) {
@@ -228,6 +228,7 @@ switch ($action) {
                 $email = normalize_email(in_str($row, 'email'));
                 if (!valid_email($email)) { $errors[] = "Row $line: invalid email \"$email\""; continue; }
                 $fields = clean_fields($row);
+                if ($fields['group_name'] !== '') $fields['group_name'] = group_ensure($fields['group_name'], $groupsCreated);
                 $role = in_str($row, 'role', 'student');
                 $role = strtolower(str_replace([' ', '-', '_'], '', $role));
                 if ($role === 'super' || $role === 'superadministrator') $role = 'superadmin';
@@ -295,7 +296,7 @@ switch ($action) {
             throw $e;
         }
         audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors)]);
-        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'errors' => array_slice($errors, 0, 200)]);
+        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'groups_created' => $groupsCreated, 'errors' => array_slice($errors, 0, 200)]);
 
     default:
         fail('Unknown action', 404);

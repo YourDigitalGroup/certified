@@ -15,14 +15,16 @@ AddType video/webm .webm
 AddType image/webp .webp
 AddType font/woff2 .woff2
 
-# 3) Cache: videos, images and fonts for 30 days (they change by getting new names), scripts and styles
-#    for an hour with revalidation (so a deploy shows up quickly), pages never (they gate on sign-in).
+# 3) Cache: videos, images and fonts for 30 days (they change by getting new names); pages, scripts and
+#    styles always revalidate so every deploy shows up at once and never half-applied.
 <IfModule mod_headers.c>
   <FilesMatch "\.(mp4|webm|mov|jpe?g|png|gif|webp|svg|ico|woff2?|ttf)$">
     Header set Cache-Control "public, max-age=2592000"
   </FilesMatch>
+  # Scripts and styles always revalidate (a cheap 304 when unchanged) so a deploy can never pair a
+  # fresh page with a stale runtime: index.html and support.js have to change together.
   <FilesMatch "\.(js|css)$">
-    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header set Cache-Control "no-cache"
   </FilesMatch>
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
@@ -38,8 +40,8 @@ AddType font/woff2 .woff2
   ExpiresByType image/webp "access plus 30 days"
   ExpiresByType image/svg+xml "access plus 30 days"
   ExpiresByType font/woff2 "access plus 30 days"
-  ExpiresByType text/css "access plus 1 hour"
-  ExpiresByType application/javascript "access plus 1 hour"
-  ExpiresByType text/javascript "access plus 1 hour"
+  ExpiresByType text/css "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
+  ExpiresByType text/javascript "access plus 0 seconds"
   ExpiresByType text/html "access plus 0 seconds"
 </IfModule>

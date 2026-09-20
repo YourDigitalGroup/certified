@@ -28,18 +28,23 @@
     const { props, preview } = parseDataProps(
       scriptEl?.getAttribute("data-props") ?? null
     );
-    // The page may keep the template inert inside <x-dc><template>…</template></x-dc> so the
-    // browser does not fetch its media at parse time; read through the wrapper when present.
-    const inert = dc.querySelector(":scope > template");
+    // The page may keep the template inert so the browser does not fetch its media at parse time:
+    // preferably as raw source in <x-dc><script type="text/x-dc-template">…</script></x-dc>, which
+    // preserves attribute case exactly as the refetch path would (camelCase props on x-import
+    // components depend on it), or inside <x-dc><template>…</template></x-dc>.
+    const raw = dc.querySelector(':scope > script[type="text/x-dc-template"]');
+    const inert = raw ? null : dc.querySelector(":scope > template");
     return {
-      template: inert ? inert.innerHTML : dc.innerHTML,
+      template: raw ? raw.textContent || "" : inert ? inert.innerHTML : dc.innerHTML,
       js: scriptEl ? scriptEl.textContent || "" : "",
       props,
       preview
     };
   }
   function unwrapTemplate(t) {
-    return t.replace(/^\s*<template>/i, "").replace(/<\/template>\s*$/i, "");
+    return t
+      .replace(/^\s*<script type="text\/x-dc-template">/i, "").replace(/<\/script>\s*$/i, "")
+      .replace(/^\s*<template>/i, "").replace(/<\/template>\s*$/i, "");
   }
   function parseDcText(src) {
     const openMatch = /<x-dc(?:\s[^>]*)?>/.exec(src);
@@ -757,7 +762,9 @@
           if (v && typeof v === "object") Object.assign(props, v);
           continue;
         }
-        props[k] = v;
+        // A template that reached us through the HTML parser has lower-cased event props
+        // (onclick); imported React components expect the camelCase name.
+        props[EVENT_MAP[k] || k] = v;
       }
       if (unresolvedHole && ctx?.__htmlStreamingNow) {
         const ph = host.placeholder({

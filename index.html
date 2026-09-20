@@ -18,9 +18,10 @@
 <script src="./image-slot.js" defer></script>
 </head>
 <body>
-<!-- The training template is kept inert inside <template> so the browser does not fetch its 125 videos
-     and 100+ images up front; support.js reads it from here and renders one screen at a time. -->
-<x-dc><template>
+<!-- The training template is kept inert inside a non-executing script block so the browser does not fetch
+     its 125 videos and 100+ images up front and support.js receives the exact source text (attribute case
+     included, which the design-system components need); it renders one screen at a time from here. -->
+<x-dc><script type="text/x-dc-template">
 <helmet>
   <style>
     body { margin: 0; background: var(--gray-50); }
@@ -6645,7 +6646,7 @@
   </sc-if>
 
 </div>
-</template></x-dc>
+</script></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;passThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:100,&quot;min&quot;:50,&quot;max&quot;:100,&quot;step&quot;:5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Certification&quot;},&quot;userName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sally Sales&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;userGroup&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;CF Digital&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;User&quot;},&quot;draftVoice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsKey&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;21m00Tcm4TlvDq8ikWAM&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice2&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;EXAVITQu4vr4xnSDxMaL&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoice3&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;UgBBYS2sOqTuMpoF3BR0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceMale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;nPczCjzI2devNBz1zQrb&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;},&quot;elevenLabsVoiceFemale&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;cgSgspJ2msm6clMCkdW9&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice-over&quot;}}">
 class Component extends DCLogic {
   state = { view: 'hub', activeModule: 'gbp', answers: {}, submitted: false, postReview: false, progress: {}, moduleStep: 0, narrDone: {}, voiceOn: true, playingStep: null, paused: false, narrProgress: 0, reviewQueue: null, reviewPos: 0, openLists: {}, typedQuery: '', phoneMapped: false, phoneBoxed: false, s0Title: false, s0P1: false, s0P2: false, s0P3: false, rev: {}, chk: {}, s3box: false, s3listing: false, s5reviews: false, s5map: false, s5bad: false, s5good: false, s5phaseB: false, e5phaseB: false, e0typed: '', e0result: false, e1typed: '', e1result: false, e5showBad: false, e5showFaq: false, em5phaseB: false };

@@ -209,6 +209,7 @@
       switch (parts[0]) {
         case 'users': view = parts[1] ? viewUser(decodeURIComponent(parts[1])) : viewUsers(); break;
         case 'groups': view = parts[1] ? viewGroup(decodeURIComponent(parts[1])) : viewGroups(); break;
+        case 'pending': view = viewPending(); break;
         case 'courses': view = parts[1] ? viewCourse(decodeURIComponent(parts[1]), parts[2]) : viewCourses(); break;
         case 'settings': view = can('superadmin') ? viewSettings() : viewDashboard(); break;
         case 'account': view = viewAccount(); break;
@@ -381,7 +382,7 @@
       var sorts = [{ k: 'name', l: 'Sort: Name' }, { k: 'group', l: 'Sort: Group' }, { k: 'progress', l: 'Sort: Most progress' }, { k: 'progress_asc', l: 'Sort: Least progress' }, { k: 'login', l: 'Sort: Last sign-in' }, { k: 'newest', l: 'Sort: Newest' }];
       var html = '<div class="page-head"><div><div class="eyebrow">Directory</div><h1>People</h1><p class="lede">' +
         (can('admin') ? 'Add people one at a time or import a spreadsheet. Click a person to edit their details, access, and completed courses.' : 'Click a person to see and update the courses they have completed.') + '</p></div>' +
-        '<div class="row wrap">' + (can('admin') ? '<button class="btn primary" id="u-add">+ Add a person</button><button class="btn" id="u-import">Import CSV</button><a class="btn" href="' + API + 'users.php?action=export">Export CSV</a>' : '') + '</div></div>' +
+        '<div class="row wrap">' + (can('admin') ? '<button class="btn primary" id="u-add">+ Add a person</button><button class="btn" id="u-import">Import CSV</button><a class="btn" href="' + API + 'users.php?action=export">Export CSV</a>' : '') + '<a class="btn" href="#/pending" title="Passes kept by name for people without an account yet">Pending passes</a></div></div>' +
         '<div class="card tight">' +
           '<div class="toolbar" style="padding:14px 16px 0 16px;margin:0">' +
             '<div class="search">' + ICONS.search + '<input class="input" id="u-q" placeholder="Search name, email, group, phone" value="' + attr(usersFilter.q) + '"></div>' +
@@ -497,10 +498,11 @@
       var btn = $('#uf-save', m.el); btn.disabled = true;
       api('users.php?action=' + (isNew ? 'create' : 'update'), data).then(function (d) {
         m.close();
+        var pend = d.pending_applied && d.pending_applied.completions ? ' · ' + d.pending_applied.completions + ' pending pass' + (d.pending_applied.completions === 1 ? '' : 'es') + ' applied' : '';
         if (!isNew) toast('Saved.', 'ok');
-        else if (d.welcome_sent) toast(d.user.name + ' added and emailed a link to set their password.', 'ok');
+        else if (d.welcome_sent) toast(d.user.name + ' added and emailed a link to set their password' + pend + '.', 'ok');
         else if (d.welcome_error) toast(d.user.name + ' added, but the email failed: ' + d.welcome_error, 'err');
-        else toast(d.user.name + ' added.', 'ok');
+        else toast(d.user.name + ' added' + pend + '.', 'ok');
         if (isNew) location.hash = '#/users/' + d.user.id; else route();
       }).catch(function (e) { btn.disabled = false; showErr(e.message); });
     });
@@ -613,7 +615,7 @@
         headers.map(function (h, i) { return '<th><div class="small muted" style="text-transform:none;letter-spacing:0">' + esc(h) + '</div><select class="input sm imp-sel" data-i="' + i + '">' + opts + '</select></th>'; }).join('') +
         '</tr></thead><tbody>' + rows.slice(0, 6).map(function (r) { return '<tr>' + headers.map(function (_, i) { return '<td class="small">' + esc(r[i] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
         (rows.length > 6 ? '<div class="hint">Showing the first 6 of ' + rows.length + ' rows.</div>' : '') +
-        '<div class="hint">Role accepts student, trainer, admin or superadmin (anything else becomes student). "Completed courses" accepts course ids or titles separated by | ; or , — those are recorded as passed; add the date it was passed as <code>p1@2026-05-22</code>. "Password hash" carries a WordPress or bcrypt hash from a previous site so people keep their old password.</div>' +
+        '<div class="hint">Role accepts student, trainer, admin or superadmin (anything else becomes student). "Completed courses" accepts course ids or titles separated by | ; or , — those are recorded as passed; add the date it was passed as <code>p1@2026-05-22</code>. "Password hash" carries a WordPress or bcrypt hash from a previous site so people keep their old password. A row with a name and completed courses but <strong>no email</strong> is kept as a <strong>pending pass</strong> and applied automatically when that person is added.</div>' +
         '<div class="notice err hidden mt" id="imp-err"></div>';
       $$('.imp-sel', box).forEach(function (s) { s.value = mapping[Number(s.getAttribute('data-i'))] || ''; s.addEventListener('change', function () { mapping[Number(s.getAttribute('data-i'))] = s.value; validate(); }); });
       validate();
@@ -638,7 +640,7 @@
       var btn = $('#imp-go', el); btn.disabled = true; btn.textContent = 'Importing…';
       api('users.php?action=import', { rows: payload, mode: $('[name=imp-mode]:checked', el).value, replace_progress: $('#imp-replace', el).checked }).then(function (d) {
         var res = $('#imp-result', el); res.classList.remove('hidden');
-        res.innerHTML = '<div class="notice ok"><strong>Done.</strong> ' + d.created + ' added · ' + d.updated + ' updated · ' + d.skipped + ' skipped' + (d.progress_reset ? ' · ' + d.progress_reset + ' earlier marks cleared' : '') + (d.completions_added ? ' · ' + d.completions_added + ' course passes recorded' : '') + (d.groups_created ? ' · ' + d.groups_created + ' group' + (d.groups_created === 1 ? '' : 's') + ' created' : '') + '.</div>' +
+        res.innerHTML = '<div class="notice ok"><strong>Done.</strong> ' + d.created + ' added · ' + d.updated + ' updated · ' + d.skipped + ' skipped' + (d.progress_reset ? ' · ' + d.progress_reset + ' earlier marks cleared' : '') + (d.completions_added ? ' · ' + d.completions_added + ' course passes recorded' : '') + (d.pending_applied ? ' · ' + d.pending_applied + ' pending passes applied' : '') + (d.pending_saved ? ' · ' + d.pending_saved + ' saved as <a href="#/pending">pending passes</a> (no email yet)' : '') + (d.groups_created ? ' · ' + d.groups_created + ' group' + (d.groups_created === 1 ? '' : 's') + ' created' : '') + '.</div>' +
           (d.errors.length ? '<div class="notice warn mt"><strong>' + d.errors.length + ' row' + (d.errors.length === 1 ? '' : 's') + ' need attention:</strong><ul style="margin:6px 0 0;padding-left:18px">' + d.errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></div>' : '');
         btn.textContent = 'Close'; btn.disabled = false; btn.onclick = function () { m.close(); route(); };
         $('#imp-map', el).classList.add('hidden');
@@ -968,6 +970,91 @@
       api('completions.php?action=set', { user_ids: userIds, course_ids: ids, passed: passed, note: passed && $('#cp-note', m.el) ? $('#cp-note', m.el).value.trim() : '' })
         .then(function (d) { m.close(); toast((passed ? 'Marked ' : 'Removed ') + d.changed + ' record' + (d.changed === 1 ? '' : 's') + '.', 'ok'); S.courses = null; route(); })
         .catch(function (e) { btn.disabled = false; $('#cp-err', m.el).textContent = e.message; $('#cp-err', m.el).classList.remove('hidden'); });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pending passes: recorded by name for people who do not have an account yet
+  // ---------------------------------------------------------------------------
+  function viewPending() {
+    return Promise.all([api('pending.php?action=list'), loadCourses(), ensureGroups()]).then(function (res) {
+      var pending = res[0].pending, claimed = res[0].claimed;
+      var titleOf = {}; S.courses.forEach(function (c) { titleOf[c.id] = c.title; });
+      var courseList = function (ids) { return ids.length + ' course' + (ids.length === 1 ? '' : 's'); };
+      var html = '<div class="crumbs"><a href="#/users">People</a> › Pending passes</div>' +
+        '<div class="page-head"><div><div class="eyebrow">Directory</div><h1>Pending passes</h1><p class="lede">Passes kept by name for people who do not have an account yet — a paper sign-in sheet, say. The moment a person with a matching name (and group, when both have one) is added or imported, the passes apply automatically. You can also attach them to an existing person here.</p></div>' +
+        '<div class="row wrap"><button class="btn primary" id="pp-add">+ Add names</button></div></div>' +
+        '<div class="card tight"><div class="table-wrap">' + (pending.length ? '<table><thead><tr><th>Name</th><th>Group</th><th>Courses</th><th>Passed on</th><th>Note</th><th>Added</th><th></th></tr></thead><tbody>' +
+          pending.map(function (p) {
+            var attach = p.matches.length
+              ? '<select class="input sm pp-user" data-id="' + p.id + '">' + p.matches.map(function (m) { return '<option value="' + m.id + '">' + esc(m.name) + ' · ' + esc(m.email) + (m.group_name ? ' · ' + esc(m.group_name) : '') + (m.same_group ? '' : ' (different group)') + '</option>'; }).join('') + '</select> <button class="btn sm primary pp-apply" data-id="' + p.id + '">Attach</button>'
+              : '<button class="btn sm pp-find" data-id="' + p.id + '">Attach to…</button>';
+            return '<tr><td><strong>' + esc(p.name) + '</strong></td><td>' + (p.group_name ? esc(p.group_name) : '<span class="muted">—</span>') + '</td>' +
+              '<td title="' + attr(p.course_ids.map(function (id) { return titleOf[id] || id; }).join('\n')) + '">' + courseList(p.course_ids) + '</td>' +
+              '<td class="nowrap">' + (p.passed_at ? esc(fmtDate(p.passed_at)) : '<span class="muted">when applied</span>') + '</td>' +
+              '<td class="small muted">' + esc(p.note || '') + '</td><td class="nowrap small muted">' + esc(fmtDate(p.created_at)) + '</td>' +
+              '<td class="right nowrap">' + attach + (can('admin') ? ' <button class="btn sm ghost pp-del" data-id="' + p.id + '" title="Delete this record">✕</button>' : '') + '</td></tr>';
+          }).join('') + '</tbody></table>' : '<div class="empty"><strong>Nothing pending.</strong><div class="muted small mt">Import a CSV with names but no emails, or use “Add names”, to keep passes for people who are not in the system yet.</div></div>') + '</div></div>' +
+        (claimed.length ? '<h2 class="mt" style="font-size:16px">Recently applied</h2><div class="card tight"><div class="table-wrap"><table><thead><tr><th>Name on the sheet</th><th>Applied to</th><th>Courses</th><th>When</th></tr></thead><tbody>' +
+          claimed.map(function (p) { return '<tr><td>' + esc(p.name) + (p.group_name ? ' <span class="muted small">· ' + esc(p.group_name) + '</span>' : '') + '</td><td>' + (p.claimed_by ? '<a href="#/users/' + p.claimed_by.id + '">' + esc(p.claimed_by.name) + '</a> <span class="muted small">' + esc(p.claimed_by.email) + '</span>' : '<span class="muted">deleted person</span>') + '</td><td>' + courseList(p.course_ids) + '</td><td class="nowrap small muted">' + esc(fmtDate(p.claimed_at, true)) + '</td></tr>'; }).join('') + '</tbody></table></div></div>' : '');
+      var main = setMain(html);
+      $$('.pp-apply', main).forEach(function (b) { b.addEventListener('click', function () {
+        var id = Number(b.getAttribute('data-id')), sel = $('.pp-user[data-id="' + id + '"]', main);
+        api('pending.php?action=apply', { id: id, user_id: Number(sel.value) }).then(function (d) { toast(d.completions_added + ' course' + (d.completions_added === 1 ? '' : 's') + ' recorded for ' + d.user.name + '.', 'ok'); route(); }).catch(function (e) { toast(e.message, 'err'); });
+      }); });
+      $$('.pp-find', main).forEach(function (b) { b.addEventListener('click', function () { openPersonPicker(Number(b.getAttribute('data-id'))); }); });
+      $$('.pp-del', main).forEach(function (b) { b.addEventListener('click', function () {
+        var id = Number(b.getAttribute('data-id'));
+        confirmDialog('Delete pending passes', 'Remove this record? Nothing changes for people who already have accounts.', 'Delete', true).then(function (yes) {
+          if (yes) api('pending.php?action=delete', { id: id }).then(function () { toast('Deleted.', 'ok'); route(); }).catch(function (e) { toast(e.message, 'err'); });
+        });
+      }); });
+      $('#pp-add', main).addEventListener('click', openPendingForm);
+    });
+  }
+  function openPersonPicker(pendingId) {
+    var m = modal({ title: 'Attach to a person', body: '<label class="f">Search people</label><input class="input" id="pk-q" placeholder="Name or email"><div class="table-wrap list-scroll mt" style="max-height:40vh" id="pk-list"><div class="muted small">Type at least two characters.</div></div>',
+      footer: '<button class="btn" data-close>Cancel</button>' });
+    var run = debounce(function () {
+      var q = $('#pk-q', m.el).value.trim();
+      if (q.length < 2) return;
+      api('users.php?action=list&q=' + encodeURIComponent(q)).then(function (d) {
+        $('#pk-list', m.el).innerHTML = d.users.length ? '<table><tbody>' + d.users.slice(0, 20).map(function (u) { return '<tr><td>' + esc(u.name) + '<div class="sub">' + esc(u.email) + (u.group_name ? ' · ' + esc(u.group_name) : '') + '</div></td><td class="right"><button class="btn sm primary pk-pick" data-id="' + u.id + '">Attach</button></td></tr>'; }).join('') + '</tbody></table>' : '<div class="muted small">No one matches.</div>';
+        $$('.pk-pick', m.el).forEach(function (b) { b.addEventListener('click', function () {
+          api('pending.php?action=apply', { id: pendingId, user_id: Number(b.getAttribute('data-id')) }).then(function (d) { m.close(); toast(d.completions_added + ' course' + (d.completions_added === 1 ? '' : 's') + ' recorded for ' + d.user.name + '.', 'ok'); route(); }).catch(function (e) { toast(e.message, 'err'); });
+        }); });
+      });
+    }, 250);
+    $('#pk-q', m.el).addEventListener('input', run);
+  }
+  function openPendingForm() {
+    var secs = coursesBySection();
+    var m = modal({ title: 'Add pending passes', wide: true, sticky: true,
+      body: '<div class="notice info mb">One person per line as <strong>First Last, Group</strong> (the group is optional). Nobody is created yet: the passes wait under the name and apply when that person is added or imported.</div>' +
+        '<div class="grid2"><div><label class="f">Names</label><textarea class="input" id="pf-names" style="min-height:220px" placeholder="Cam Martinez, CF Digital\nJo Jessen, 712 Digital"></textarea>' +
+          '<label class="f mt">Passed on</label><input class="input" id="pf-date" type="date" value="' + new Date().toISOString().slice(0, 10) + '" style="max-width:200px">' +
+          '<label class="f mt">Note (optional)</label><input class="input" id="pf-note" placeholder="e.g. Digital Summit 2026 sign-in sheet"></div>' +
+        '<div><label class="f">Courses to record</label><div class="matrix list-scroll" style="max-height:44vh;border:0">' + secs.map(function (sec) {
+          return '<div class="sec"><div class="sec-h"><label class="check"><input type="checkbox" class="pf-sec" data-sec="' + attr(sec.name) + '"> ' + esc(sec.name) + '</label><span class="cnt">' + sec.courses.length + '</span></div>' +
+            sec.courses.map(function (c) { return '<label class="m" data-sec="' + attr(sec.name) + '"><input type="checkbox" class="cb pf-cb" data-id="' + attr(c.id) + '"><span class="t">' + esc(c.title) + '</span></label>'; }).join('') + '</div>';
+        }).join('') + '</div></div></div><div class="notice err hidden mt" id="pf-err"></div>',
+      footer: '<span class="left muted small" id="pf-count">0 courses × 0 names</span><button class="btn" data-close>Cancel</button><button class="btn primary" id="pf-ok" disabled>Save pending passes</button>' });
+    function chosen() { return $$('.pf-cb', m.el).filter(function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-id'); }); }
+    function names() {
+      return $('#pf-names', m.el).value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+        var parts = l.split(','), nm = parts.shift().trim().split(/\s+/);
+        return { first_name: nm.shift() || '', last_name: nm.join(' '), group_name: parts.join(',').trim() };
+      });
+    }
+    function refresh() { var n = chosen().length, k = names().length; $('#pf-count', m.el).textContent = n + (n === 1 ? ' course' : ' courses') + ' × ' + k + (k === 1 ? ' name' : ' names'); $('#pf-ok', m.el).disabled = !n || !k; }
+    $$('.pf-cb', m.el).forEach(function (cb) { cb.addEventListener('change', refresh); });
+    $$('.pf-sec', m.el).forEach(function (sa) { sa.addEventListener('change', function () { $$('.m[data-sec="' + sa.getAttribute('data-sec').replace(/"/g, '\\"') + '"] .pf-cb', m.el).forEach(function (c) { c.checked = sa.checked; }); refresh(); }); });
+    $('#pf-names', m.el).addEventListener('input', refresh);
+    $('#pf-ok', m.el).addEventListener('click', function () {
+      var btn = $('#pf-ok', m.el); btn.disabled = true;
+      api('pending.php?action=create', { people: names(), course_ids: chosen(), passed_at: $('#pf-date', m.el).value, note: $('#pf-note', m.el).value.trim() })
+        .then(function (d) { m.close(); toast(d.saved + ' name' + (d.saved === 1 ? '' : 's') + ' saved.', 'ok'); route(); })
+        .catch(function (e) { btn.disabled = false; $('#pf-err', m.el).textContent = e.message; $('#pf-err', m.el).classList.remove('hidden'); });
     });
   }
 

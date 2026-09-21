@@ -259,6 +259,24 @@ function migrate(PDO $pdo): void
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_reset_requests_at ON reset_requests(at)");
         $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_version', '3')");
     }
+    if ($ver < 4) {
+        // Passes recorded for people who do not have an account yet (a paper sign-in sheet with
+        // names but no emails). Applied automatically when a matching person is added or imported.
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pending_passes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            group_name TEXT NOT NULL DEFAULT '',
+            course_ids TEXT NOT NULL,
+            passed_at TEXT,
+            note TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            created_by INTEGER,
+            claimed_user_id INTEGER,
+            claimed_at TEXT
+        )");
+        $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_version', '4')");
+    }
     seed_superadmin($pdo);
 }
 
@@ -899,6 +917,103 @@ function send_password_link(array $user, string $purpose, string $ip, ?int $byUs
     audit($byUserId, $purpose === 'welcome' ? 'auth.welcome_link' : 'auth.reset_link', (string)$user['email'], ['sent' => $r['ok'], 'error' => $r['ok'] ? null : $r['error'], 'ip' => $ip]);
     if (!$r['ok']) db()->prepare('DELETE FROM password_resets WHERE token_hash = ?')->execute([hash('sha256', $token)]);
     return $r;
+}
+
+// ---------------------------------------------------------------------------
+// Pending passes: courses recorded for a person by name before they have an account (a paper
+// sign-in sheet, say). Claimed automatically when a person with the same name — and the same
+// group, when both sides have one — is added or imported, or attached by hand in the admin panel.
+// ---------------------------------------------------------------------------
+/** Lower-case letters and digits only, common suffixes dropped, so "Bublitz Jr." matches "Bublitz". */
+function name_key(string $s): string
+{
+    $s = mb_strtolower(trim($s));
+    $s = (string)preg_replace('/\b(jr|sr|ii|iii|iv)\.?\s*$/u', '', $s);
+    return (string)preg_replace('/[^a-z0-9]+/u', '', $s);
+}
+
+function pending_public(array $r): array
+{
+    $ids = json_decode((string)$r['course_ids'], true);
+    return [
+        'id' => (int)$r['id'],
+        'first_name' => $r['first_name'],
+        'last_name' => $r['last_name'],
+        'name' => trim($r['first_name'] . ' ' . $r['last_name']),
+        'group_name' => $r['group_name'],
+        'course_ids' => is_array($ids) ? array_values($ids) : [],
+        'passed_at' => $r['passed_at'],
+        'note' => $r['note'],
+        'created_at' => $r['created_at'],
+        'claimed_user_id' => $r['claimed_user_id'] === null ? null : (int)$r['claimed_user_id'],
+        'claimed_at' => $r['claimed_at'],
+    ];
+}
+
+/** Save a pending record for a name, or extend the unclaimed one that already exists for that name and group. Returns its id. */
+function pending_save(string $first, string $last, string $group, array $courseIds, ?string $passedAt, string $note, ?int $by): int
+{
+    $pdo = db();
+    $courseIds = array_values(array_unique(array_filter(array_map('strval', $courseIds), 'course_exists')));
+    foreach ($pdo->query('SELECT * FROM pending_passes WHERE claimed_user_id IS NULL')->fetchAll() as $r) {
+        if (name_key($r['first_name']) !== name_key($first) || name_key($r['last_name']) !== name_key($last)) continue;
+        if (mb_strtolower(trim($r['group_name'])) !== mb_strtolower(trim($group))) continue;
+        $have = json_decode((string)$r['course_ids'], true) ?: [];
+        $merged = array_values(array_unique(array_merge($have, $courseIds)));
+        $pdo->prepare('UPDATE pending_passes SET course_ids = ?, passed_at = ?, note = ? WHERE id = ?')
+            ->execute([json_encode($merged), $passedAt ?: $r['passed_at'], $note !== '' ? $note : $r['note'], $r['id']]);
+        return (int)$r['id'];
+    }
+    $pdo->prepare('INSERT INTO pending_passes (first_name, last_name, group_name, course_ids, passed_at, note, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([trim($first), trim($last), trim($group), json_encode($courseIds), $passedAt, $note, now(), $by]);
+    return (int)$pdo->lastInsertId();
+}
+
+/** Record a pending entry's courses for a real account and mark the entry claimed. Returns completions added. */
+function pending_apply(array $p, int $userId, ?int $actorId): int
+{
+    $pdo = db();
+    $ids = json_decode((string)$p['course_ids'], true) ?: [];
+    $when = $p['passed_at'] ?: now();
+    $ins = $pdo->prepare("INSERT OR IGNORE INTO completions (user_id, course_id, score, total, passed_at, method, granted_by, note) VALUES (?, ?, NULL, NULL, ?, 'trainer', ?, ?)");
+    $added = 0;
+    foreach ($ids as $cid) {
+        if (!course_exists((string)$cid)) continue;
+        $ins->execute([$userId, (string)$cid, $when, $p['created_by'] ?: $actorId, (string)$p['note']]);
+        $added += (int)$pdo->query('SELECT changes()')->fetchColumn();
+    }
+    $pdo->prepare('UPDATE pending_passes SET claimed_user_id = ?, claimed_at = ? WHERE id = ?')->execute([$userId, now(), $p['id']]);
+    return $added;
+}
+
+/** Unclaimed pending records whose name matches this person (and group, when both have one). */
+function pending_matches_for(array $user): array
+{
+    $fk = name_key((string)($user['first_name'] ?? ''));
+    $lk = name_key((string)($user['last_name'] ?? ''));
+    if ($fk === '' || $lk === '') return [];
+    $g = mb_strtolower(trim((string)($user['group_name'] ?? '')));
+    $out = [];
+    foreach (db()->query('SELECT * FROM pending_passes WHERE claimed_user_id IS NULL')->fetchAll() as $r) {
+        if (name_key($r['first_name']) !== $fk || name_key($r['last_name']) !== $lk) continue;
+        $pg = mb_strtolower(trim((string)$r['group_name']));
+        if ($g !== '' && $pg !== '' && $g !== $pg) continue;
+        $out[] = $r;
+    }
+    return $out;
+}
+
+/** Apply every matching pending record to a newly added or imported person. Returns ['records' => n, 'completions' => n]. */
+function pending_claim_for_user(array $user, ?int $actorId): array
+{
+    $records = 0;
+    $completions = 0;
+    foreach (pending_matches_for($user) as $p) {
+        $completions += pending_apply($p, (int)$user['id'], $actorId);
+        $records++;
+        audit($actorId, 'pending.claim', (string)$user['email'], ['pending_id' => (int)$p['id'], 'name' => trim($p['first_name'] . ' ' . $p['last_name']), 'courses' => json_decode((string)$p['course_ids'], true)]);
+    }
+    return ['records' => $records, 'completions' => $completions];
 }
 
 // ---------------------------------------------------------------------------

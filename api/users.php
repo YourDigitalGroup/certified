@@ -147,6 +147,8 @@ switch ($action) {
             $role, $hash, $requireChange ? 1 : 0, $ts, $ts, $actor['id']]);
         $id = (int)db()->lastInsertId();
         audit((int)$actor['id'], 'users.create', $email, ['role' => $role, 'passwordless' => $hash === null]);
+        // Passes saved for this name before the account existed (a sign-in sheet) apply now.
+        $pendingApplied = pending_claim_for_user(fetch_user($id), (int)$actor['id']);
         // Optionally invite them straight away with a one-time link to choose their password.
         $welcome = null;
         if ($hash === null && in_bool($d, 'send_welcome', false)) {
@@ -158,6 +160,7 @@ switch ($action) {
             'user' => user_public(fetch_user($id)),
             'welcome_sent' => (bool)($welcome && $welcome['ok']),
             'welcome_error' => ($welcome && !$welcome['ok']) ? $welcome['error'] : null,
+            'pending_applied' => $pendingApplied,
         ], 201);
 
     case 'update':
@@ -249,13 +252,36 @@ switch ($action) {
         $replaceProgress = in_bool($d, 'replace_progress', false);
         $assignable = assignable_roles($actor);
         $pdo = db();
-        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0; $progressReset = 0;
+        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0; $progressReset = 0; $pendingSaved = 0; $pendingApplied = 0;
         $pdo->beginTransaction();
         try {
             foreach ($rows as $i => $row) {
                 $line = $i + 1;
                 if (!is_array($row)) { $errors[] = "Row $line: malformed"; continue; }
                 $email = normalize_email(in_str($row, 'email'));
+                if ($email === '') {
+                    // No email yet (a paper sign-in sheet): keep the completed courses under the name so
+                    // they apply the moment this person is added or imported with an address.
+                    $fields = clean_fields($row);
+                    $pendIds = [];
+                    $pendWhen = null;
+                    foreach (preg_split('/[|;,]/', (string)($row['completed'] ?? '')) as $item) {
+                        $item = trim((string)$item);
+                        if ($item === '') continue;
+                        if (strpos($item, '@') !== false) { [$item, $whenRaw] = explode('@', $item, 2); $item = trim($item); $pendWhen = $pendWhen ?? iso_or_null($whenRaw); }
+                        $cid = resolve_course_id($item);
+                        if ($cid === null) { $errors[] = "Row $line: unknown course \"" . $item . '"'; continue; }
+                        $pendIds[] = $cid;
+                    }
+                    if (($fields['first_name'] === '' && $fields['last_name'] === '') || !$pendIds) {
+                        $errors[] = "Row $line: no email" . ($pendIds ? ' and no name' : ' (and no completed courses to keep under the name)');
+                        continue;
+                    }
+                    if ($fields['group_name'] !== '') $fields['group_name'] = group_ensure($fields['group_name'], $groupsCreated);
+                    pending_save($fields['first_name'], $fields['last_name'], $fields['group_name'], $pendIds, $pendWhen, 'Saved from a CSV import without an email', (int)$actor['id']);
+                    $pendingSaved++;
+                    continue;
+                }
                 if (!valid_email($email)) { $errors[] = "Row $line: invalid email \"$email\""; continue; }
                 $fields = clean_fields($row);
                 if ($fields['group_name'] !== '') $fields['group_name'] = group_ensure($fields['group_name'], $groupsCreated);
@@ -323,14 +349,16 @@ switch ($action) {
                         ->execute([$uid, $cid, $when ?: now(), $actor['id']]);
                     $completionsAdded += (int)$pdo->query('SELECT changes()')->fetchColumn();
                 }
+                // Passes kept under this name before the person had an account apply now.
+                $pendingApplied += pending_claim_for_user(fetch_user($uid), (int)$actor['id'])['completions'];
             }
             $pdo->commit();
         } catch (Throwable $e) {
             $pdo->rollBack();
             throw $e;
         }
-        audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors), 'progress_reset' => $progressReset, 'completions_added' => $completionsAdded]);
-        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'progress_reset' => $progressReset, 'groups_created' => $groupsCreated, 'errors' => array_slice($errors, 0, 200)]);
+        audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors), 'progress_reset' => $progressReset, 'completions_added' => $completionsAdded, 'pending_saved' => $pendingSaved, 'pending_applied' => $pendingApplied]);
+        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'progress_reset' => $progressReset, 'groups_created' => $groupsCreated, 'pending_saved' => $pendingSaved, 'pending_applied' => $pendingApplied, 'errors' => array_slice($errors, 0, 200)]);
 
     default:
         fail('Unknown action', 404);

@@ -41,7 +41,7 @@ Only this account is a super admin at the start. Promote others under **People â
 | Role | Can do |
 | --- | --- |
 | Student | Take the training. Courses unlock strictly in hub order: Our Process blocks 1â€“10, then Digital 101 Online Visibility, Content Marketing, then Digital 201. |
-| Trainer | Everything a student can, plus **attendance**: mark who has passed which course (from a person's page or a course's Attendance tab), and email someone a password link. Sees everyone, pre-filtered to their own group. |
+| Trainer | Everything a student can, plus **attendance**: mark who has passed which course (from a person's page or a course's Attendance tab), and email someone a password link. Sees everyone in People (the group filter narrows the list); a course's Attendance tab starts on their own group. |
 | Admin | Everything a trainer can, plus add/edit/import/delete people, set passwords, edit quizzes and replace videos. Cannot create or edit super admins. |
 | Super admin | Full control, including granting/removing super admin and site settings (pass mark, portal title). |
 

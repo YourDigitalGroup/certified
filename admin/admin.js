@@ -192,9 +192,11 @@
   // person has already moved on must not paint over the newer view.
   var routeSeq = 0;
   var setMainImpl = null;
+  var routeParts = null, prevRouteParts = null; // where we are, and where we came from
   function route() {
     var hash = location.hash || '#/dashboard';
     var parts = hash.replace(/^#\/?/, '').split('/');
+    prevRouteParts = routeParts; routeParts = parts;
     var main = $('#main');
     var seq = ++routeSeq;
     setActiveNav('#/' + parts[0]);
@@ -372,7 +374,10 @@
     return list;
   }
   function viewUsers() {
-    if (S.me.role === 'trainer' && usersFilter.group === '' && !usersFilter._touched && S.me.group_name) usersFilter.group = S.me.group_name;
+    // People always opens showing everyone. The filters survive only a detour into a person's page
+    // and back, so a narrowed list is still there after editing someone.
+    var backFromPerson = prevRouteParts && prevRouteParts[0] === 'users' && prevRouteParts[1];
+    if (!backFromPerson) { usersFilter.q = ''; usersFilter.group = ''; usersFilter.role = ''; usersFilter.stage = ''; usersFilter.band = ''; }
     return Promise.all([loadUsers({ q: usersFilter.q, group: usersFilter.group, role: usersFilter.role }), loadCourses()]).then(function (res) {
       var users = res[0];
       S.users = users;
@@ -407,7 +412,6 @@
       }
       render();
       var reload = debounce(function () {
-        usersFilter._touched = true;
         loadUsers({ q: usersFilter.q, group: usersFilter.group, role: usersFilter.role }).then(function (list) {
           if (!wrap || !wrap.isConnected) return; // the person has navigated away
           S.users = list;
@@ -415,7 +419,7 @@
         }).catch(function (e) { toast(e.message, 'err'); });
       }, 200);
       $('#u-q', main).addEventListener('input', function (e) { usersFilter.q = e.target.value; reload(); });
-      $('#u-group', main).addEventListener('change', function (e) { usersFilter.group = e.target.value; usersFilter._touched = true; reload(); });
+      $('#u-group', main).addEventListener('change', function (e) { usersFilter.group = e.target.value; reload(); });
       $('#u-role', main).addEventListener('change', function (e) { usersFilter.role = e.target.value; reload(); });
       $('#u-stage', main).addEventListener('change', function (e) { usersFilter.stage = e.target.value; render(); });
       $('#u-band', main).addEventListener('change', function (e) { usersFilter.band = e.target.value; render(); });

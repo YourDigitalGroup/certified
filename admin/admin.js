@@ -580,7 +580,8 @@
         '<div id="imp-map" class="mt hidden"></div>' +
         '<div id="imp-result" class="mt hidden"></div>',
       footer: '<div class="left stack" style="gap:6px"><div class="row wrap"><label class="check"><input type="radio" name="imp-mode" value="upsert" checked> Update people who already exist (matched by email)</label><label class="check"><input type="radio" name="imp-mode" value="skip"> Skip people who already exist</label></div>' +
-        '<label class="check"><input type="checkbox" id="imp-replace"> Replace earlier imported or trainer-marked progress with this file’s "completed" column <span class="muted">(quiz passes earned in the portal are kept)</span></label></div>' +
+        '<label class="check"><input type="checkbox" id="imp-replace"> Replace earlier imported or trainer-marked progress with this file’s "completed" column <span class="muted">(quiz passes earned in the portal are kept)</span></label>' +
+        '<label class="check"><input type="checkbox" id="imp-passwords"> Set passwords from this file’s "password" column, replacing any current password <span class="muted">(nobody is asked to change it; unticked, a password only fills an empty one)</span></label></div>' +
         '<button class="btn" data-close>Cancel</button><button class="btn primary" id="imp-go" disabled>Import</button>' });
     var el = m.el, rows = [], headers = [], mapping = [];
     $('#imp-template', el).addEventListener('click', function (e) {
@@ -619,7 +620,7 @@
         headers.map(function (h, i) { return '<th><div class="small muted" style="text-transform:none;letter-spacing:0">' + esc(h) + '</div><select class="input sm imp-sel" data-i="' + i + '">' + opts + '</select></th>'; }).join('') +
         '</tr></thead><tbody>' + rows.slice(0, 6).map(function (r) { return '<tr>' + headers.map(function (_, i) { return '<td class="small">' + esc(r[i] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
         (rows.length > 6 ? '<div class="hint">Showing the first 6 of ' + rows.length + ' rows.</div>' : '') +
-        '<div class="hint">Role accepts student, trainer, admin or superadmin (anything else becomes student). "Completed courses" accepts course ids or titles separated by | ; or , — those are recorded as passed; add the date it was passed as <code>p1@2026-05-22</code>. "Password hash" carries a WordPress or bcrypt hash from a previous site so people keep their old password. A row with a name and completed courses but <strong>no email</strong> is kept as a <strong>pending pass</strong> and applied automatically when that person is added.</div>' +
+        '<div class="hint">Role accepts student, trainer, admin or superadmin (anything else becomes student). "Completed courses" accepts course ids or titles separated by | ; or , — those are recorded as passed; add the date it was passed as <code>p1@2026-05-22</code>. "Password" sets a sign-in password (new people must change it on first sign-in unless you tick <em>Set passwords from this file</em> below, which also replaces existing passwords). "Password hash" carries a WordPress or bcrypt hash from a previous site so people keep their old password. A row with a name and completed courses but <strong>no email</strong> is kept as a <strong>pending pass</strong> and applied automatically when that person is added.</div>' +
         '<div class="notice err hidden mt" id="imp-err"></div>';
       $$('.imp-sel', box).forEach(function (s) { s.value = mapping[Number(s.getAttribute('data-i'))] || ''; s.addEventListener('change', function () { mapping[Number(s.getAttribute('data-i'))] = s.value; validate(); }); });
       validate();
@@ -640,15 +641,34 @@
           o[k] = v;
         });
         return o;
-      }).filter(function (o) { return o.email; });
+      }).filter(function (o) { return o.email || ((o.first_name || o.last_name) && o.completed); }); // no email but a name and courses: kept as a pending pass
       var btn = $('#imp-go', el); btn.disabled = true; btn.textContent = 'Importing…';
-      api('users.php?action=import', { rows: payload, mode: $('[name=imp-mode]:checked', el).value, replace_progress: $('#imp-replace', el).checked }).then(function (d) {
+      // A big file goes in batches so no single request runs past the server's time limit (hashing a
+      // password takes a noticeable fraction of a second each). Rows already sent stay imported if a later
+      // batch fails; re-importing the file is safe because existing people are simply updated again.
+      var opts = { mode: $('[name=imp-mode]:checked', el).value, replace_progress: $('#imp-replace', el).checked, set_passwords: $('#imp-passwords', el).checked };
+      var BATCH = 60, total = { created: 0, updated: 0, skipped: 0, passwords_set: 0, progress_reset: 0, completions_added: 0, pending_applied: 0, pending_saved: 0, groups_created: 0, errors: [] };
+      function sendFrom(start) {
+        if (start >= payload.length) return Promise.resolve(total);
+        if (payload.length > BATCH) btn.textContent = 'Importing… ' + Math.min(start + BATCH, payload.length) + ' / ' + payload.length;
+        var body = { rows: payload.slice(start, start + BATCH), row_offset: start };
+        Object.keys(opts).forEach(function (k) { body[k] = opts[k]; });
+        return api('users.php?action=import', body).then(function (d) {
+          Object.keys(total).forEach(function (k) { if (k === 'errors') total.errors = total.errors.concat(d.errors || []); else total[k] += d[k] || 0; });
+          return sendFrom(start + BATCH);
+        });
+      }
+      sendFrom(0).then(function (d) {
         var res = $('#imp-result', el); res.classList.remove('hidden');
-        res.innerHTML = '<div class="notice ok"><strong>Done.</strong> ' + d.created + ' added · ' + d.updated + ' updated · ' + d.skipped + ' skipped' + (d.progress_reset ? ' · ' + d.progress_reset + ' earlier marks cleared' : '') + (d.completions_added ? ' · ' + d.completions_added + ' course passes recorded' : '') + (d.pending_applied ? ' · ' + d.pending_applied + ' pending passes applied' : '') + (d.pending_saved ? ' · ' + d.pending_saved + ' saved as <a href="#/pending">pending passes</a> (no email yet)' : '') + (d.groups_created ? ' · ' + d.groups_created + ' group' + (d.groups_created === 1 ? '' : 's') + ' created' : '') + '.</div>' +
+        res.innerHTML = '<div class="notice ok"><strong>Done.</strong> ' + d.created + ' added · ' + d.updated + ' updated · ' + d.skipped + ' skipped' + (d.passwords_set ? ' · ' + d.passwords_set + ' password' + (d.passwords_set === 1 ? '' : 's') + ' set' : '') + (d.progress_reset ? ' · ' + d.progress_reset + ' earlier marks cleared' : '') + (d.completions_added ? ' · ' + d.completions_added + ' course passes recorded' : '') + (d.pending_applied ? ' · ' + d.pending_applied + ' pending passes applied' : '') + (d.pending_saved ? ' · ' + d.pending_saved + ' saved as <a href="#/pending">pending passes</a> (no email yet)' : '') + (d.groups_created ? ' · ' + d.groups_created + ' group' + (d.groups_created === 1 ? '' : 's') + ' created' : '') + '.</div>' +
           (d.errors.length ? '<div class="notice warn mt"><strong>' + d.errors.length + ' row' + (d.errors.length === 1 ? '' : 's') + ' need attention:</strong><ul style="margin:6px 0 0;padding-left:18px">' + d.errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></div>' : '');
         btn.textContent = 'Close'; btn.disabled = false; btn.onclick = function () { m.close(); route(); };
         $('#imp-map', el).classList.add('hidden');
-      }).catch(function (e) { btn.disabled = false; btn.textContent = 'Import'; var err = $('#imp-err', el); if (err) { err.textContent = e.message; err.classList.remove('hidden'); } else toast(e.message, 'err'); });
+      }).catch(function (e) {
+        var done = total.created + total.updated + total.skipped;
+        var msg = e.message + (done ? ' — ' + done + ' of ' + payload.length + ' rows were imported before this happened; fix the file and import it again (people already imported are simply updated).' : '');
+        btn.disabled = false; btn.textContent = 'Import'; var err = $('#imp-err', el); if (err) { err.textContent = msg; err.classList.remove('hidden'); } else toast(msg, 'err');
+      });
     });
   }
 

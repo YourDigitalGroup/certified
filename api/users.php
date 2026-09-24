@@ -245,18 +245,27 @@ switch ($action) {
         $rows = $d['rows'] ?? null;
         if (!is_array($rows) || count($rows) === 0) fail('No rows to import.');
         if (count($rows) > 5000) fail('Import at most 5000 rows at a time.');
+        // Hashing a password takes a noticeable fraction of a second each, so a big file with passwords can
+        // outlast a 30 s limit: ask for more time (hosts may ignore this) and let the admin page send the
+        // file in batches, each carrying row_offset so "Row N" in an error still points at the file's line.
+        if (function_exists('set_time_limit')) @set_time_limit(300);
+        $offset = max(0, in_int($d, 'row_offset', 0));
         $mode = in_str($d, 'mode', 'upsert') === 'skip' ? 'skip' : 'upsert';
         // replace_progress: for every person in the file, drop passes that came from earlier imports or
         // trainer marks before recording the file's "completed" list. Passes earned in the portal's own
         // quizzes are never touched, so a re-import can correct manual mistakes without losing real work.
         $replaceProgress = in_bool($d, 'replace_progress', false);
+        // set_passwords: the file's "password" (or "password_hash") column is the source of truth. It
+        // replaces whatever each listed person has now and nobody is asked to change it, so staff can
+        // hand out exactly what the sheet says. Off, a password from the file only fills an empty one.
+        $setPasswords = in_bool($d, 'set_passwords', false);
         $assignable = assignable_roles($actor);
         $pdo = db();
-        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0; $progressReset = 0; $pendingSaved = 0; $pendingApplied = 0;
+        $created = 0; $updated = 0; $skipped = 0; $errors = []; $completionsAdded = 0; $groupsCreated = 0; $progressReset = 0; $pendingSaved = 0; $pendingApplied = 0; $passwordsSet = 0;
         $pdo->beginTransaction();
         try {
             foreach ($rows as $i => $row) {
-                $line = $i + 1;
+                $line = $i + 1 + $offset;
                 if (!is_array($row)) { $errors[] = "Row $line: malformed"; continue; }
                 $email = normalize_email(in_str($row, 'email'));
                 if ($email === '') {
@@ -306,8 +315,26 @@ switch ($action) {
                     foreach (USER_FIELDS as $f) $merged[$f] = (array_key_exists($f, $row) && in_str($row, $f) !== '') ? $fields[$f] : $existing[$f];
                     $pdo->prepare('UPDATE users SET first_name = ?, last_name = ?, group_name = ?, phone = ?, address = ?, city = ?, state = ?, zip = ?, notes = ?, role = ?, updated_at = ? WHERE id = ?')
                         ->execute([$merged['first_name'], $merged['last_name'], $merged['group_name'], $merged['phone'], $merged['address'], $merged['city'], $merged['state'], $merged['zip'], $merged['notes'], $newRole, now(), $existing['id']]);
-                    // Only fill in a password / last sign-in the account does not have yet; never overwrite.
-                    if ($legacyHash !== '' && empty($existing['password_hash'])) $pdo->prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')->execute([$legacyHash, $existing['id']]);
+                    $filePassword = (string)($row['password'] ?? '');
+                    if ($setPasswords && ($legacyHash !== '' || $filePassword !== '')) {
+                        if ((int)$existing['id'] === (int)$actor['id']) {
+                            $errors[] = "Row $line: your own password is never changed by an import (use Account)";
+                        } elseif ($legacyHash === '' && password_problem($filePassword)) {
+                            $errors[] = "Row $line: password too short for $email (min " . MIN_PASSWORD_LENGTH . "), kept the current one";
+                        } else {
+                            $newHash = $legacyHash !== '' ? $legacyHash : password_hash($filePassword, PASSWORD_DEFAULT);
+                            $pdo->prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')->execute([$newHash, $existing['id']]);
+                            $pdo->prepare('DELETE FROM password_resets WHERE user_id = ?')->execute([$existing['id']]); // any emailed link is now stale
+                            $passwordsSet++;
+                        }
+                    } elseif (empty($existing['password_hash']) && $legacyHash !== '') {
+                        // Without set_passwords, only fill in a password the account does not have yet; never overwrite.
+                        $pdo->prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')->execute([$legacyHash, $existing['id']]);
+                        $passwordsSet++;
+                    } elseif (empty($existing['password_hash']) && $filePassword !== '' && !password_problem($filePassword)) {
+                        $pdo->prepare('UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?')->execute([password_hash($filePassword, PASSWORD_DEFAULT), $existing['id']]);
+                        $passwordsSet++;
+                    }
                     if ($lastLogin && empty($existing['last_login_at'])) $pdo->prepare('UPDATE users SET last_login_at = ? WHERE id = ?')->execute([$lastLogin, $existing['id']]);
                     $uid = (int)$existing['id'];
                     $updated++;
@@ -320,8 +347,9 @@ switch ($action) {
                         $hash = $legacyHash; // keeps working; upgraded to a native hash on first login
                     } elseif ($password !== '') {
                         if (password_problem($password)) { $errors[] = "Row $line: password too short for $email (min " . MIN_PASSWORD_LENGTH . "), created without one"; }
-                        else { $hash = password_hash($password, PASSWORD_DEFAULT); $requireChange = 1; }
+                        else { $hash = password_hash($password, PASSWORD_DEFAULT); $requireChange = $setPasswords ? 0 : 1; }
                     }
+                    if ($hash !== null) $passwordsSet++;
                     $ts = now();
                     $pdo->prepare('INSERT INTO users (email, first_name, last_name, group_name, phone, address, city, state, zip, notes, role, password_hash, must_change_password, active, created_at, updated_at, last_login_at, created_by)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)')
@@ -357,8 +385,8 @@ switch ($action) {
             $pdo->rollBack();
             throw $e;
         }
-        audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors), 'progress_reset' => $progressReset, 'completions_added' => $completionsAdded, 'pending_saved' => $pendingSaved, 'pending_applied' => $pendingApplied]);
-        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'progress_reset' => $progressReset, 'groups_created' => $groupsCreated, 'pending_saved' => $pendingSaved, 'pending_applied' => $pendingApplied, 'errors' => array_slice($errors, 0, 200)]);
+        audit((int)$actor['id'], 'users.import', '', ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'errors' => count($errors), 'progress_reset' => $progressReset, 'completions_added' => $completionsAdded, 'pending_saved' => $pendingSaved, 'pending_applied' => $pendingApplied, 'passwords_set' => $passwordsSet, 'set_passwords' => $setPasswords]);
+        respond(['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'completions_added' => $completionsAdded, 'progress_reset' => $progressReset, 'groups_created' => $groupsCreated, 'pending_saved' => $pendingSaved, 'pending_applied' => $pendingApplied, 'passwords_set' => $passwordsSet, 'errors' => array_slice($errors, 0, 200)]);
 
     default:
         fail('Unknown action', 404);
